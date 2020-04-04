@@ -1,0 +1,26 @@
+[package]
+name = "print_bytes"
+version = "0.1.0"
+authors = ["dylni"]
+edition = "2018"
+exclude = [".*", "/rustfmt.toml", "/src/bin", "/tests"]
+description = """
+Print bytes as losslessly as possible
+"""
+repository = "https://github.com/dylni/print_bytes"
+readme = "README.md"
+keywords = ["print", "bytes", "osstr", "path", "stdout"]
+categories = ["command-line-interface", "encoding", "os", "rust-patterns"]
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+os_str_bytes = { version = "1.0", optional = true }
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["consoleapi"] }
+
+[features]
+default = ["os_str"]
+const_generics = []
+os_str = ["os_str_bytes"]
+specialization = []
