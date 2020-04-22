@@ -1,5 +1,3 @@
-#![cfg(feature = "os_str")]
-
 use std::ffi::OsStr;
 use std::io::Result as IoResult;
 use std::process::Command;
@@ -24,7 +22,22 @@ fn test_process_pipe() -> IoResult<()> {
     .spawn()?
     .wait_with_output()?;
 
-    assert_eq!(WTF8_STRING, output.stdout.as_slice());
+    let output = output.stdout.as_slice();
+    #[cfg(unix)]
+    assert_eq!(WTF8_STRING, output);
+    #[cfg(windows)]
+    {
+        use std::char::REPLACEMENT_CHARACTER;
+
+        assert_ne!(WTF8_STRING, output);
+
+        let mut replacement = [0; 4];
+        let replacement = REPLACEMENT_CHARACTER.encode_utf8(&mut replacement);
+
+        let mut lossy_string = WTF8_STRING.to_vec();
+        lossy_string.splice(3..6, replacement.bytes());
+        assert_eq!(lossy_string, output);
+    }
 
     Ok(())
 }

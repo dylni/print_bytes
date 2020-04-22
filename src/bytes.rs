@@ -1,9 +1,13 @@
 use std::borrow::Cow;
 use std::ffi::CStr;
 use std::ffi::CString;
+use std::ffi::OsStr;
+use std::ffi::OsString;
 use std::io::IoSlice;
 use std::io::IoSliceMut;
 use std::ops::Deref;
+use std::path::Path;
+use std::path::PathBuf;
 
 /// A value that can be printed by any of the functions in this crate.
 ///
@@ -34,6 +38,20 @@ impl From<Vec<u8>> for Bytes<'static> {
     }
 }
 
+impl From<OsString> for Bytes<'static> {
+    #[inline]
+    fn from(value: OsString) -> Self {
+        #[cfg(unix)]
+        {
+            use std::os::unix::ffi::OsStringExt;
+
+            value.into_vec().into()
+        }
+        #[cfg(windows)]
+        value.to_string_lossy().into_owned().into_bytes().into()
+    }
+}
+
 macro_rules! r#impl {
     ( $type:ty , $convert_method:ident ) => {
         impl From<$type> for Bytes<'static> {
@@ -47,19 +65,7 @@ macro_rules! r#impl {
 
 r#impl!(CString, into_bytes);
 
-#[cfg(feature = "os_str")]
-mod os_string {
-    use std::ffi::OsString;
-    use std::path::PathBuf;
-
-    use os_str_bytes::OsStringBytes;
-
-    use super::Bytes;
-
-    r#impl!(OsString, into_vec);
-
-    r#impl!(PathBuf, into_os_string);
-}
+r#impl!(PathBuf, into_os_string);
 
 /// Represents a type similarly to [`Display`].
 ///
@@ -138,6 +144,23 @@ where
     }
 }
 
+impl<'a> ToBytes<'a> for OsStr {
+    #[inline]
+    fn to_bytes(&'a self) -> Bytes<'a> {
+        #[cfg(unix)]
+        {
+            use std::os::unix::ffi::OsStrExt;
+
+            self.as_bytes().to_bytes()
+        }
+        #[cfg(windows)]
+        match self.to_string_lossy() {
+            Cow::Borrowed(value) => value.as_bytes().to_bytes(),
+            Cow::Owned(value) => value.into_bytes().into(),
+        }
+    }
+}
+
 macro_rules! r#impl {
     ( $type:ty , $convert_method:ident ) => {
         impl<'a> ToBytes<'a> for $type {
@@ -157,30 +180,10 @@ r#impl!(IoSlice<'a>, deref);
 
 r#impl!(IoSliceMut<'a>, deref);
 
+r#impl!(OsString, as_os_str);
+
+r#impl!(Path, as_os_str);
+
+r#impl!(PathBuf, as_path);
+
 r#impl!(Vec::<u8>, as_slice);
-
-#[cfg(feature = "os_str")]
-mod os_str {
-    use std::ffi::OsStr;
-    use std::ffi::OsString;
-    use std::path::Path;
-    use std::path::PathBuf;
-
-    use super::Bytes;
-    use super::ToBytes;
-
-    impl<'a> ToBytes<'a> for OsStr {
-        #[inline]
-        fn to_bytes(&'a self) -> Bytes<'a> {
-            use os_str_bytes::OsStrBytes;
-
-            Bytes(OsStrBytes::to_bytes(self))
-        }
-    }
-
-    r#impl!(OsString, as_os_str);
-
-    r#impl!(Path, as_os_str);
-
-    r#impl!(PathBuf, as_path);
-}

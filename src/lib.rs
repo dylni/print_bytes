@@ -4,7 +4,7 @@
 //! Usually, paths are printed by calling [`Path::display`] or
 //! [`Path::to_string_lossy`] beforehand. However, both of these methods are
 //! always lossy; they misrepresent some valid paths in output. The same is
-//! true when using [`String::from_utf8_lossy`] to print any other UTF-8-like
+//! true when using [`String::from_utf8_lossy`] to print any other UTF-8–like
 //! byte sequence.
 //!
 //! Instead, this crate only performs a lossy conversion when the output device
@@ -14,18 +14,19 @@
 //! standard library, which uses the same character for its lossy conversion
 //! functions.
 //!
+//! ### Note: Windows Compatibility
+//!
+//! [`OsStr`] and related structs will be printed lossily on Windows. Paths are
+//! not represented using bytes on that platform, so it may be confusing to
+//! print them in that manner. Plus, the encoding most often used to account
+//! for the difference is [not permitted to be written to files][wtf-8
+//! audience], so it would not make sense for this crate to use it.
+//!
 //! # Features
 //!
 //! These features are optional and can be enabled or disabled in a
 //! "Cargo.toml" file. Nightly features are unstable, since they rely on
 //! unstable Rust features.
-//!
-//! ### Default Features
-//!
-//! - **os_str** -
-//!   Provides implementations of [`ToBytes`] for [`OsStr`] and other similar
-//!   structs, such as [`Path`]. As a result, they can be output using
-//!   functions in this crate.
 //!
 //! ### Nightly Features
 //!
@@ -45,8 +46,6 @@
 //! use print_bytes::println_bytes;
 //!
 //! # fn main() -> IoResult<()> {
-//! # #[cfg(feature = "os_str")]
-//! # {
 //! print!("exe: ");
 //! println_bytes(&env::current_exe()?);
 //! println!();
@@ -55,20 +54,19 @@
 //! for arg in env::args_os().skip(1) {
 //!     println_bytes(&arg);
 //! }
-//! # }
 //! #     Ok(())
 //! # }
 //! ```
 //!
 //! [array]: https://doc.rust-lang.org/std/primitive.array.html
 //! [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
-//! [`Path`]: https://doc.rust-lang.org/std/path/struct.Path.html
 //! [`Path::display`]: https://doc.rust-lang.org/std/path/struct.Path.html#method.display
 //! [`Path::to_string_lossy`]: https://doc.rust-lang.org/std/path/struct.Path.html#method.to_string_lossy
 //! [`REPLACEMENT_CHARACTER`]: https://doc.rust-lang.org/std/char/constant.REPLACEMENT_CHARACTER.html
 //! [`String::from_utf8_lossy`]: https://doc.rust-lang.org/std/string/struct.String.html#method.from_utf8_lossy
 //! [`ToBytes`]: trait.ToBytes.html
 //! [`write_bytes`]: fn.write_bytes.html
+//! [wtf-8 audience]: https://simonsapin.github.io/wtf-8/#intended-audience
 
 #![cfg_attr(
     any(all(doc, not(doctest)), feature = "const_generics"),
@@ -147,7 +145,7 @@ r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);
 ///
 /// # Errors
 ///
-/// If writing fails, an error is returned.
+/// Returns an error if writing fails.
 ///
 /// [module]: index.html
 /// [`write!`]: https://doc.rust-lang.org/std/macro.write.html

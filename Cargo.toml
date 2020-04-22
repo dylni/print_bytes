@@ -13,14 +13,12 @@ keywords = ["print", "bytes", "osstr", "path", "stdout"]
 categories = ["command-line-interface", "encoding", "os", "rust-patterns"]
 license = "MIT OR Apache-2.0"
 
-[dependencies]
-os_str_bytes = { version = "2.0", optional = true }
-
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["consoleapi"] }
 
+[dev-dependencies]
+os_str_bytes = "2.0"
+
 [features]
-default = ["os_str"]
 const_generics = []
-os_str = ["os_str_bytes"]
 specialization = []

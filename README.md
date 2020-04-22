@@ -6,7 +6,7 @@ as possible.
 Usually, paths are printed by calling [`Path::display`] or
 [`Path::to_string_lossy`] beforehand. However, both of these methods are always
 lossy; they misrepresent some valid paths in output. The same is true when
-using [`String::from_utf8_lossy`] to print any other UTF-8-like byte sequence.
+using [`String::from_utf8_lossy`] to print any other UTF-8–like byte sequence.
 
 Instead, this crate only performs a lossy conversion when the output device is
 known to require unicode, to make output as accurate as possible. When
