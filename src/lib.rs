@@ -95,8 +95,8 @@ pub use bytes::Bytes;
 use bytes::BytesInner;
 pub use bytes::ToBytes;
 
-#[cfg(unix)]
-#[path = "unix.rs"]
+#[cfg(not(windows))]
+#[path = "common.rs"]
 mod imp;
 #[cfg(windows)]
 #[path = "windows.rs"]

@@ -1,8 +1,12 @@
 use std::ffi::OsStr;
 use std::io;
 use std::marker::PhantomData;
-use std::os::unix::ffi::OsStrExt;
-use std::os::unix::io::AsRawFd;
+
+#[cfg(any(target_os = "hermit", target_os = "redox", unix))]
+use std::os::unix as os;
+
+use os::ffi::OsStrExt;
+use os::io::AsRawFd;
 
 use super::WriteBytes;
 
