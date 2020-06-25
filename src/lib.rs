@@ -121,6 +121,17 @@ where
     }
 }
 
+#[cfg(feature = "specialization")]
+impl<'a, T> WriteBytes for &'a mut T
+where
+    T: ?Sized + WriteBytes,
+    &'a mut T: Write,
+{
+    default fn is_console(&self) -> bool {
+        (**self).is_console()
+    }
+}
+
 macro_rules! r#impl {
     ( $($type:ty),* $(,)? ) => {
         $(
@@ -151,12 +162,12 @@ r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);
 #[cfg(feature = "specialization")]
 #[inline]
 pub fn write_bytes<'a, TValue, TWriter>(
-    writer: &mut TWriter,
+    mut writer: TWriter,
     value: &'a TValue,
 ) -> io::Result<()>
 where
     TValue: ?Sized + ToBytes<'a>,
-    TWriter: ?Sized + Write,
+    TWriter: Write,
 {
     writer.write_bytes(value)
 }
