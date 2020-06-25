@@ -3,14 +3,14 @@ use std::os::unix::io::AsRawFd;
 
 use super::WriteBytes;
 
-pub(crate) fn is_console<THandle>(_: &THandle) -> bool
+pub(super) fn is_console<THandle>(_: &THandle) -> bool
 where
     THandle: AsRawFd,
 {
     false
 }
 
-pub(crate) fn write<TWriter>(
+pub(super) fn write<TWriter>(
     writer: &mut TWriter,
     bytes: &[u8],
 ) -> io::Result<()>

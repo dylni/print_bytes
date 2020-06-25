@@ -45,7 +45,6 @@
 //!
 //! use print_bytes::println_bytes;
 //!
-//! # fn main() -> io::Result<()> {
 //! print!("exe: ");
 //! println_bytes(&env::current_exe()?);
 //! println!();
@@ -54,8 +53,8 @@
 //! for arg in env::args_os().skip(1) {
 //!     println_bytes(&arg);
 //! }
-//! #     Ok(())
-//! # }
+//! #
+//! # Ok::<_, io::Error>(())
 //! ```
 //!
 //! [array]: https://doc.rust-lang.org/std/primitive.array.html
@@ -198,7 +197,7 @@ macro_rules! r#impl {
         {
             let _ = $writer.lock();
             $print_fn(value);
-            $print_fn(b"\n".as_ref());
+            $print_fn(&b"\n"[..]);
         }
     };
 }
@@ -279,6 +278,7 @@ mod tests {
 
     const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
 
+    #[derive(Debug)]
     struct Writer {
         buffer: Vec<u8>,
         is_console: bool,

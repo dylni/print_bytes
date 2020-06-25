@@ -6,7 +6,7 @@ use winapi::um::winnt::HANDLE;
 
 use super::WriteBytes;
 
-pub(crate) fn is_console<THandle>(handle: &THandle) -> bool
+pub(super) fn is_console<THandle>(handle: &THandle) -> bool
 where
     THandle: AsRawHandle,
 {
@@ -17,7 +17,7 @@ where
     unsafe { GetConsoleMode(handle, &mut mode) != 0 }
 }
 
-pub(crate) fn write<TWriter>(
+pub(super) fn write<TWriter>(
     writer: &mut TWriter,
     bytes: &[u8],
 ) -> io::Result<()>

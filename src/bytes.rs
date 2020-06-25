@@ -15,7 +15,7 @@ use std::path::PathBuf;
 ///
 /// [`ToBytes`]: trait.ToBytes.html
 #[derive(Debug)]
-pub struct Bytes<'a>(pub(crate) Cow<'a, [u8]>);
+pub struct Bytes<'a>(pub(super) Cow<'a, [u8]>);
 
 impl<'a, T> From<Cow<'a, T>> for Bytes<'a>
 where

@@ -9,8 +9,8 @@ Print bytes as losslessly as possible
 """
 repository = "https://github.com/dylni/print_bytes"
 readme = "README.md"
-keywords = ["print", "bytes", "osstr", "path", "stdout"]
-categories = ["command-line-interface", "encoding", "os", "rust-patterns"]
+keywords = ["bytes", "osstr", "path", "print", "windows"]
+categories = ["command-line-interface", "os"]
 license = "MIT OR Apache-2.0"
 
 [package.metadata.docs.rs]

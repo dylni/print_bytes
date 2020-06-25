@@ -20,7 +20,7 @@ fn test_write(bytes: &[u8]) -> io::Result<()> {
 
 #[test]
 fn test_empty_write() -> io::Result<()> {
-    test_write(&[])
+    test_write(b"")
 }
 
 #[test]
@@ -32,9 +32,9 @@ fn test_invalid_write() -> io::Result<()> {
 fn test_multiple_writes() -> io::Result<()> {
     let mut writer = Vec::new();
 
-    write_bytes(&mut writer, b"Hello, ".as_ref())?;
+    write_bytes(&mut writer, &b"Hello, "[..])?;
     writer.extend_from_slice(b"world");
-    write_bytes(&mut writer, b"!".as_ref())?;
+    write_bytes(&mut writer, &b"!"[..])?;
 
     assert_eq!(b"Hello, world!", writer.as_slice());
 
@@ -45,11 +45,11 @@ fn test_multiple_writes() -> io::Result<()> {
 fn test_implementations() -> io::Result<()> {
     let mut writer = Vec::new();
 
-    write_bytes(&mut writer, b"slice ".as_ref())?;
-    write_bytes(&mut writer, &Cow::Borrowed(b"Cow::Borrowed ".as_ref()))?;
-    write_bytes(&mut writer, &Cow::<[u8]>::Owned(b"Cow::Owned ".to_vec()))?;
+    write_bytes(&mut writer, &b"slice "[..])?;
+    write_bytes(&mut writer, &Cow::Borrowed(&b"Cow::Borrowed "[..]))?;
+    write_bytes(&mut writer, &Cow::<[_]>::Owned(b"Cow::Owned ".to_vec()))?;
     write_bytes(&mut writer, CStr::from_bytes_with_nul(b"CStr \0").unwrap())?;
-    write_bytes(&mut writer, &CString::new(b"CString ".as_ref())?)?;
+    write_bytes(&mut writer, &CString::new(&b"CString "[..])?)?;
     write_bytes(&mut writer, &IoSlice::new(b"IoSlice "))?;
     write_bytes(&mut writer, &IoSliceMut::new(&mut b"IoSliceMut ".to_vec()))?;
     write_bytes(&mut writer, &b"Vec ".to_vec())?;
