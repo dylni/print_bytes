@@ -122,7 +122,7 @@ impl<'a> ToBytes<'a> for [u8] {
     }
 }
 
-#[cfg(any(all(doc, not(doctest)), feature = "const_generics"))]
+#[cfg(feature = "const_generics")]
 impl<'a, const N: usize> ToBytes<'a> for [u8; N] {
     #[inline]
     fn to_bytes(&'a self) -> Bytes<'a> {

@@ -3,15 +3,15 @@
 use std::borrow::Cow;
 use std::ffi::CStr;
 use std::ffi::CString;
+use std::io;
 use std::io::IoSlice;
 use std::io::IoSliceMut;
-use std::io::Result as IoResult;
 
 use print_bytes::write_bytes;
 
 const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
 
-fn test_write(bytes: &[u8]) -> IoResult<()> {
+fn test_write(bytes: &[u8]) -> io::Result<()> {
     let mut writer = Vec::new();
     write_bytes(&mut writer, bytes)?;
     assert_eq!(bytes, writer.as_slice());
@@ -19,17 +19,17 @@ fn test_write(bytes: &[u8]) -> IoResult<()> {
 }
 
 #[test]
-fn test_empty_write() -> IoResult<()> {
+fn test_empty_write() -> io::Result<()> {
     test_write(&[])
 }
 
 #[test]
-fn test_invalid_write() -> IoResult<()> {
+fn test_invalid_write() -> io::Result<()> {
     test_write(INVALID_STRING)
 }
 
 #[test]
-fn test_multiple_writes() -> IoResult<()> {
+fn test_multiple_writes() -> io::Result<()> {
     let mut writer = Vec::new();
 
     write_bytes(&mut writer, b"Hello, ".as_ref())?;
@@ -42,7 +42,7 @@ fn test_multiple_writes() -> IoResult<()> {
 }
 
 #[test]
-fn test_implementations() -> IoResult<()> {
+fn test_implementations() -> io::Result<()> {
     let mut writer = Vec::new();
 
     write_bytes(&mut writer, b"slice ".as_ref())?;

@@ -1,4 +1,4 @@
-use std::io::Result as IoResult;
+use std::io;
 use std::os::windows::io::AsRawHandle;
 
 use winapi::um::consoleapi::GetConsoleMode;
@@ -20,7 +20,7 @@ where
 pub(crate) fn write<TWriter>(
     writer: &mut TWriter,
     bytes: &[u8],
-) -> IoResult<()>
+) -> io::Result<()>
 where
     TWriter: ?Sized + WriteBytes,
 {

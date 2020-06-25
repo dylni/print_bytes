@@ -18,7 +18,7 @@
 //!
 //! [`OsStr`] and related structs will be printed lossily on Windows. Paths are
 //! not represented using bytes on that platform, so it may be confusing to
-//! print them in that manner. Plus, the encoding most often used to account
+//! display them in that manner. Plus, the encoding most often used to account
 //! for the difference is [not permitted to be written to files][wtf-8
 //! audience], so it would not make sense for this crate to use it.
 //!
@@ -41,11 +41,11 @@
 //!
 //! ```
 //! use std::env;
-//! # use std::io::Result as IoResult;
+//! # use std::io;
 //!
 //! use print_bytes::println_bytes;
 //!
-//! # fn main() -> IoResult<()> {
+//! # fn main() -> io::Result<()> {
 //! print!("exe: ");
 //! println_bytes(&env::current_exe()?);
 //! println!();
@@ -69,19 +69,19 @@
 //! [wtf-8 audience]: https://simonsapin.github.io/wtf-8/#intended-audience
 
 #![cfg_attr(
-    any(all(doc, not(doctest)), feature = "const_generics"),
+    any(feature = "const_generics", feature = "specialization"),
     allow(incomplete_features)
 )]
 #![doc(html_root_url = "https://docs.rs/print_bytes/*")]
-#![cfg_attr(
-    any(all(doc, not(doctest)), feature = "const_generics"),
-    feature(const_generics)
-)]
+#![cfg_attr(any(feature = "const_generics"), feature(const_generics))]
+// Only require a nightly compiler when building documentation for docs.rs.
+// This is a private option that should not be used.
+// https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
+#![cfg_attr(print_bytes_docs_rs, feature(doc_cfg))]
 #![cfg_attr(feature = "specialization", feature(specialization))]
 #![warn(unused_results)]
 
 use std::io;
-use std::io::Result as IoResult;
 use std::io::Stderr;
 use std::io::StderrLock;
 use std::io::Stdout;
@@ -103,7 +103,7 @@ trait WriteBytes: Write {
     fn is_console(&self) -> bool;
 
     #[inline]
-    fn write_bytes<'a, TValue>(&mut self, value: &'a TValue) -> IoResult<()>
+    fn write_bytes<'a, TValue>(&mut self, value: &'a TValue) -> io::Result<()>
     where
         TValue: ?Sized + ToBytes<'a>,
     {
@@ -141,20 +141,19 @@ r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);
 ///
 /// For more information, see [the module-level documentation][module].
 ///
-/// *This function is only available with the `"specialization"` feature.*
-///
 /// # Errors
 ///
 /// Returns an error if writing fails.
 ///
 /// [module]: index.html
 /// [`write!`]: https://doc.rust-lang.org/std/macro.write.html
-#[cfg(any(doc, feature = "specialization"))]
+#[cfg_attr(print_bytes_docs_rs, doc(cfg(feature = "specialization")))]
+#[cfg(feature = "specialization")]
 #[inline]
 pub fn write_bytes<'a, TValue, TWriter>(
     writer: &mut TWriter,
     value: &'a TValue,
-) -> IoResult<()>
+) -> io::Result<()>
 where
     TValue: ?Sized + ToBytes<'a>,
     TWriter: ?Sized + Write,
@@ -261,7 +260,7 @@ r#impl!(
 
 #[cfg(test)]
 mod tests {
-    use std::io::Result as IoResult;
+    use std::io;
     use std::io::Write;
 
     use super::imp;
@@ -284,11 +283,11 @@ mod tests {
     }
 
     impl Write for Writer {
-        fn flush(&mut self) -> IoResult<()> {
+        fn flush(&mut self) -> io::Result<()> {
             self.buffer.flush()
         }
 
-        fn write(&mut self, bytes: &[u8]) -> IoResult<usize> {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
             self.buffer.write(bytes)
         }
     }
@@ -310,9 +309,9 @@ mod tests {
         }
     }
 
-    fn test<TWriteFn>(mut write_fn: TWriteFn) -> IoResult<()>
+    fn test<TWriteFn>(mut write_fn: TWriteFn) -> io::Result<()>
     where
-        TWriteFn: FnMut(&mut Writer, &[u8]) -> IoResult<()>,
+        TWriteFn: FnMut(&mut Writer, &[u8]) -> io::Result<()>,
     {
         let mut writer = Writer::new(true);
         write_fn(&mut writer, INVALID_STRING)?;
@@ -326,13 +325,13 @@ mod tests {
     }
 
     #[test]
-    fn test_write() -> IoResult<()> {
+    fn test_write() -> io::Result<()> {
         test(imp::write)
     }
 
     #[cfg(feature = "specialization")]
     #[test]
-    fn test_write_bytes() -> IoResult<()> {
+    fn test_write_bytes() -> io::Result<()> {
         test(|writer, bytes| super::write_bytes(writer, bytes))
     }
 }

@@ -13,6 +13,11 @@ keywords = ["print", "bytes", "osstr", "path", "stdout"]
 categories = ["command-line-interface", "encoding", "os", "rust-patterns"]
 license = "MIT OR Apache-2.0"
 
+[package.metadata.docs.rs]
+all-features = true
+rustc-args = ["--cfg", "print_bytes_docs_rs"]
+rustdoc-args = ["--cfg", "print_bytes_docs_rs"]
+
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["consoleapi"] }
 

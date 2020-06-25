@@ -1,5 +1,5 @@
 use std::ffi::OsStr;
-use std::io::Result as IoResult;
+use std::io;
 use std::process::Command;
 use std::process::Stdio;
 
@@ -8,7 +8,7 @@ use os_str_bytes::OsStrBytes;
 const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
 
 #[test]
-fn test_process_pipe() -> IoResult<()> {
+fn test_process_pipe() -> io::Result<()> {
     let output = Command::new(format!(
         "target/{}/writer",
         if cfg!(debug_assertions) {
@@ -35,7 +35,7 @@ fn test_process_pipe() -> IoResult<()> {
         let replacement = REPLACEMENT_CHARACTER.encode_utf8(&mut replacement);
 
         let mut lossy_string = WTF8_STRING.to_vec();
-        lossy_string.splice(3..6, replacement.bytes());
+        let _ = lossy_string.splice(3..6, replacement.bytes());
         assert_eq!(lossy_string, output);
     }
 
@@ -44,7 +44,7 @@ fn test_process_pipe() -> IoResult<()> {
 
 #[cfg(feature = "specialization")]
 #[test]
-fn test_implementations() -> IoResult<()> {
+fn test_implementations() -> io::Result<()> {
     use std::ffi::OsString;
     use std::path::Path;
     use std::path::PathBuf;
