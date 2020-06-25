@@ -9,63 +9,19 @@ use std::ops::Deref;
 use std::path::Path;
 use std::path::PathBuf;
 
+#[derive(Debug)]
+pub(super) enum BytesInner<'a> {
+    Bytes(&'a [u8]),
+    OsStr(&'a OsStr),
+}
+
 /// A value that can be printed by any of the functions in this crate.
 ///
 /// For more information, see [`ToBytes`].
 ///
 /// [`ToBytes`]: trait.ToBytes.html
 #[derive(Debug)]
-pub struct Bytes<'a>(pub(super) Cow<'a, [u8]>);
-
-impl<'a, T> From<Cow<'a, T>> for Bytes<'a>
-where
-    T: ?Sized + ToBytes<'a> + ToOwned,
-    T::Owned: Into<Bytes<'a>>,
-{
-    #[inline]
-    fn from(value: Cow<'a, T>) -> Self {
-        match value {
-            Cow::Borrowed(value) => value.to_bytes(),
-            Cow::Owned(value) => value.into(),
-        }
-    }
-}
-
-impl From<Vec<u8>> for Bytes<'static> {
-    #[inline]
-    fn from(value: Vec<u8>) -> Self {
-        Bytes(Cow::Owned(value))
-    }
-}
-
-impl From<OsString> for Bytes<'static> {
-    #[inline]
-    fn from(value: OsString) -> Self {
-        #[cfg(unix)]
-        {
-            use std::os::unix::ffi::OsStringExt;
-
-            value.into_vec().into()
-        }
-        #[cfg(windows)]
-        value.to_string_lossy().into_owned().into_bytes().into()
-    }
-}
-
-macro_rules! r#impl {
-    ( $type:ty , $convert_method:ident ) => {
-        impl From<$type> for Bytes<'static> {
-            #[inline]
-            fn from(value: $type) -> Self {
-                Into::into(value.$convert_method())
-            }
-        }
-    };
-}
-
-r#impl!(CString, into_bytes);
-
-r#impl!(PathBuf, into_os_string);
+pub struct Bytes<'a>(pub(super) BytesInner<'a>);
 
 /// Represents a type similarly to [`Display`].
 ///
@@ -73,11 +29,7 @@ r#impl!(PathBuf, into_os_string);
 /// output. It is used to bound values accepted by functions in this crate.
 ///
 /// Since [`Bytes`] has no public constructor, implementations should call
-/// [`to_bytes`] on another type to create an instance. If storing owned bytes
-/// is necessary, [`Bytes::from`] can be used instead to avoid lifetime errors.
-///
-/// Consider also implementing [`From`] for [`Bytes`] when the type is a smart
-/// pointer.
+/// [`to_bytes`] on another type to create an instance.
 ///
 /// ### Note: Future Compatibility
 ///
@@ -95,8 +47,8 @@ r#impl!(PathBuf, into_os_string);
 ///
 /// struct ByteSlice<'a>(&'a [u8]);
 ///
-/// impl<'a> ToBytes<'a> for ByteSlice<'a> {
-///     fn to_bytes(&'a self) -> Bytes<'a> {
+/// impl ToBytes for ByteSlice<'_> {
+///     fn to_bytes(&self) -> Bytes<'_> {
 ///         self.0.to_bytes()
 ///     }
 /// }
@@ -105,85 +57,63 @@ r#impl!(PathBuf, into_os_string);
 /// ```
 ///
 /// [`Bytes`]: struct.Bytes.html
-/// [`Bytes::from`]: struct.Bytes.html#impl-From%3CVec%3Cu8%3E%3E
 /// [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
 /// [`to_bytes`]: #tymethod.to_bytes
 /// [`ToString`]: https://doc.rust-lang.org/std/string/trait.ToString.html
-pub trait ToBytes<'a> {
+pub trait ToBytes {
     /// Creates a byte sequence that will be used to represent the instance.
     #[must_use]
-    fn to_bytes(&'a self) -> Bytes<'a>;
+    fn to_bytes(&self) -> Bytes<'_>;
 }
 
-impl<'a> ToBytes<'a> for [u8] {
+impl ToBytes for [u8] {
     #[inline]
-    fn to_bytes(&'a self) -> Bytes<'a> {
-        Bytes(Cow::Borrowed(self))
+    fn to_bytes(&self) -> Bytes<'_> {
+        Bytes(BytesInner::Bytes(self))
     }
 }
 
 #[cfg(feature = "const_generics")]
-impl<'a, const N: usize> ToBytes<'a> for [u8; N] {
+impl<const N: usize> ToBytes for [u8; N] {
     #[inline]
-    fn to_bytes(&'a self) -> Bytes<'a> {
-        self.as_ref().to_bytes()
+    fn to_bytes(&self) -> Bytes<'_> {
+        self[..].to_bytes()
     }
 }
 
-impl<'a, T> ToBytes<'a> for Cow<'a, T>
+impl<T> ToBytes for Cow<'_, T>
 where
-    T: ?Sized + ToBytes<'a> + ToOwned,
-    T::Owned: ToBytes<'a>,
+    T: ?Sized + ToBytes + ToOwned,
+    T::Owned: ToBytes,
 {
     #[inline]
-    fn to_bytes(&'a self) -> Bytes<'a> {
-        match self {
-            Cow::Borrowed(value) => value.to_bytes(),
-            Cow::Owned(value) => value.to_bytes(),
-        }
+    fn to_bytes(&self) -> Bytes<'_> {
+        (**self).to_bytes()
     }
 }
 
-impl<'a> ToBytes<'a> for OsStr {
+impl ToBytes for OsStr {
     #[inline]
-    fn to_bytes(&'a self) -> Bytes<'a> {
-        #[cfg(unix)]
-        {
-            use std::os::unix::ffi::OsStrExt;
-
-            self.as_bytes().to_bytes()
-        }
-        #[cfg(windows)]
-        match self.to_string_lossy() {
-            Cow::Borrowed(value) => value.as_bytes().to_bytes(),
-            Cow::Owned(value) => value.into_bytes().into(),
-        }
+    fn to_bytes(&self) -> Bytes<'_> {
+        Bytes(BytesInner::OsStr(self))
     }
 }
 
 macro_rules! r#impl {
     ( $type:ty , $convert_method:ident ) => {
-        impl<'a> ToBytes<'a> for $type {
+        impl ToBytes for $type {
             #[inline]
-            fn to_bytes(&'a self) -> Bytes<'a> {
+            fn to_bytes(&self) -> Bytes<'_> {
                 ToBytes::to_bytes(self.$convert_method())
             }
         }
     };
 }
-
 r#impl!(CStr, to_bytes);
-
 r#impl!(CString, as_c_str);
-
-r#impl!(IoSlice<'a>, deref);
-
-r#impl!(IoSliceMut<'a>, deref);
-
+r#impl!(IoSlice<'_>, deref);
+r#impl!(IoSliceMut<'_>, deref);
 r#impl!(OsString, as_os_str);
-
 r#impl!(Path, as_os_str);
-
 r#impl!(PathBuf, as_path);
-
 r#impl!(Vec::<u8>, as_slice);

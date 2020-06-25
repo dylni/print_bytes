@@ -16,11 +16,14 @@
 //!
 //! ### Note: Windows Compatibility
 //!
-//! [`OsStr`] and related structs will be printed lossily on Windows. Paths are
+//! [`OsStr`] and related structs may be printed lossily on Windows. Paths are
 //! not represented using bytes on that platform, so it may be confusing to
 //! display them in that manner. Plus, the encoding most often used to account
 //! for the difference is [not permitted to be written to files][wtf-8
 //! audience], so it would not make sense for this crate to use it.
+//!
+//! Windows Console can display these paths, so this crate will output them
+//! losslessly when writing to that terminal.
 //!
 //! # Features
 //!
@@ -89,6 +92,7 @@ use std::io::Write;
 
 mod bytes;
 pub use bytes::Bytes;
+use bytes::BytesInner;
 pub use bytes::ToBytes;
 
 #[cfg(unix)]
@@ -99,22 +103,27 @@ mod imp;
 mod imp;
 
 trait WriteBytes: Write {
-    fn is_console(&self) -> bool;
+    fn to_console(&self) -> Option<imp::Console<'_>>;
 
     #[inline]
-    fn write_bytes<'a, TValue>(&mut self, value: &'a TValue) -> io::Result<()>
+    fn write_bytes<TValue>(&mut self, value: &TValue) -> io::Result<()>
     where
-        TValue: ?Sized + ToBytes<'a>,
+        TValue: ?Sized + ToBytes,
     {
         let value = value.to_bytes().0;
-        let buffer;
-        let value = if self.is_console() {
-            buffer = String::from_utf8_lossy(&value);
-            buffer.as_bytes()
-        } else {
-            &value
-        };
-        self.write_all(value)
+        match value {
+            BytesInner::Bytes(value) => {
+                let buffer;
+                let value = if self.to_console().is_some() {
+                    buffer = String::from_utf8_lossy(value);
+                    buffer.as_bytes()
+                } else {
+                    &value
+                };
+                self.write_all(value)
+            }
+            BytesInner::OsStr(value) => imp::write_os(self, value),
+        }
     }
 }
 
@@ -123,8 +132,8 @@ impl<T> WriteBytes for T
 where
     T: ?Sized + Write,
 {
-    default fn is_console(&self) -> bool {
-        false
+    default fn to_console(&self) -> Option<imp::Console<'_>> {
+        None
     }
 }
 
@@ -134,8 +143,8 @@ where
     T: ?Sized + WriteBytes,
     &'a mut T: Write,
 {
-    default fn is_console(&self) -> bool {
-        (**self).is_console()
+    default fn to_console(&self) -> Option<imp::Console<'_>> {
+        (**self).to_console()
     }
 }
 
@@ -143,8 +152,8 @@ macro_rules! r#impl {
     ( $($type:ty),* $(,)? ) => {
         $(
             impl WriteBytes for $type {
-                fn is_console(&self) -> bool {
-                    imp::is_console(self)
+                fn to_console(&self) -> Option<imp::Console<'_>> {
+                    imp::Console::from_handle(self)
                 }
             }
         )*
@@ -168,12 +177,12 @@ r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);
 #[cfg_attr(print_bytes_docs_rs, doc(cfg(feature = "specialization")))]
 #[cfg(feature = "specialization")]
 #[inline]
-pub fn write_bytes<'a, TValue, TWriter>(
+pub fn write_bytes<TValue, TWriter>(
     mut writer: TWriter,
-    value: &'a TValue,
+    value: &TValue,
 ) -> io::Result<()>
 where
-    TValue: ?Sized + ToBytes<'a>,
+    TValue: ?Sized + ToBytes,
     TWriter: Write,
 {
     writer.write_bytes(value)
@@ -188,9 +197,9 @@ macro_rules! r#impl {
     ) => {
         $(#[$print_fn_attr])*
         #[inline]
-        pub fn $print_fn<'a, TValue>(value: &'a TValue)
+        pub fn $print_fn<TValue>(value: &TValue)
         where
-            TValue: ?Sized + ToBytes<'a>,
+            TValue: ?Sized + ToBytes,
         {
             if let Err(error) = $writer.write_bytes(value) {
                 panic!("failed writing to {}: {}", $label, error);
@@ -199,9 +208,9 @@ macro_rules! r#impl {
 
         $(#[$println_fn_attr])*
         #[inline]
-        pub fn $println_fn<'a, TValue>(value: &'a TValue)
+        pub fn $println_fn<TValue>(value: &TValue)
         where
-            TValue: ?Sized + ToBytes<'a>,
+            TValue: ?Sized + ToBytes,
         {
             let _ = $writer.lock();
             $print_fn(value);
@@ -281,6 +290,7 @@ mod tests {
     use std::io;
     use std::io::Write;
 
+    use super::imp;
     use super::WriteBytes;
 
     const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80";
@@ -311,8 +321,14 @@ mod tests {
     }
 
     impl WriteBytes for Writer {
-        fn is_console(&self) -> bool {
-            self.is_console
+        fn to_console(&self) -> Option<imp::Console<'_>> {
+            if self.is_console {
+                // SAFETY: Since no platform strings are being written, no test
+                // should ever write to this console.
+                Some(unsafe { imp::Console::null() })
+            } else {
+                None
+            }
         }
     }
 
@@ -346,7 +362,7 @@ mod tests {
 
     #[test]
     fn test_write() -> io::Result<()> {
-        test(|writer, bytes| writer.write_bytes(bytes))
+        test(WriteBytes::write_bytes)
     }
 
     #[cfg(feature = "specialization")]
