@@ -106,7 +106,15 @@ trait WriteBytes: Write {
     where
         TValue: ?Sized + ToBytes<'a>,
     {
-        imp::write(self, &value.to_bytes().0)
+        let value = value.to_bytes().0;
+        let buffer;
+        let value = if self.is_console() {
+            buffer = String::from_utf8_lossy(&value);
+            buffer.as_bytes()
+        } else {
+            &value
+        };
+        self.write_all(value)
     }
 }
 
@@ -273,10 +281,9 @@ mod tests {
     use std::io;
     use std::io::Write;
 
-    use super::imp;
     use super::WriteBytes;
 
-    const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
+    const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80";
 
     #[derive(Debug)]
     struct Writer {
@@ -310,13 +317,15 @@ mod tests {
     }
 
     fn assert_invalid_string(writer: &Writer, lossy: bool) {
-        let bytes = writer.buffer.as_slice();
-        assert_ne!(lossy, INVALID_STRING == bytes);
+        let lossy_string = String::from_utf8_lossy(INVALID_STRING);
+        let lossy_string = lossy_string.as_bytes();
+        assert_ne!(INVALID_STRING, lossy_string);
+
+        let string = writer.buffer.as_slice();
         if lossy {
-            assert_eq!(
-                String::from_utf8_lossy(INVALID_STRING).as_bytes(),
-                bytes,
-            );
+            assert_eq!(lossy_string, string);
+        } else {
+            assert_eq!(INVALID_STRING, string);
         }
     }
 
@@ -324,20 +333,20 @@ mod tests {
     where
         TWriteFn: FnMut(&mut Writer, &[u8]) -> io::Result<()>,
     {
-        let mut writer = Writer::new(true);
-        write_fn(&mut writer, INVALID_STRING)?;
-        assert_invalid_string(&writer, cfg!(windows));
-
-        writer = Writer::new(false);
+        let mut writer = Writer::new(false);
         write_fn(&mut writer, INVALID_STRING)?;
         assert_invalid_string(&writer, false);
+
+        writer = Writer::new(true);
+        write_fn(&mut writer, INVALID_STRING)?;
+        assert_invalid_string(&writer, true);
 
         Ok(())
     }
 
     #[test]
     fn test_write() -> io::Result<()> {
-        test(imp::write)
+        test(|writer, bytes| writer.write_bytes(bytes))
     }
 
     #[cfg(feature = "specialization")]
