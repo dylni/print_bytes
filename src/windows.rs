@@ -75,7 +75,7 @@ impl<'a> Console<'a> {
         let mut string: &[_] = &string;
         while !string.is_empty() {
             let written_length = self.write_wide(string)?;
-            string = &string[..written_length];
+            string = &string[written_length..];
         }
         Ok(())
     }
