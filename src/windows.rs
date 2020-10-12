@@ -17,7 +17,7 @@ use super::WriteBytes;
 
 pub(super) struct Console<'a> {
     handle: HANDLE,
-    _lifetime: PhantomData<&'a ()>,
+    _marker: PhantomData<&'a ()>,
 }
 
 impl<'a> Console<'a> {
@@ -32,7 +32,7 @@ impl<'a> Console<'a> {
         if unsafe { GetConsoleMode(handle, &mut mode) } == TRUE {
             Some(Self {
                 handle,
-                _lifetime: PhantomData,
+                _marker: PhantomData,
             })
         } else {
             None
@@ -44,7 +44,7 @@ impl<'a> Console<'a> {
     pub(super) const unsafe fn null() -> Self {
         Self {
             handle: ptr::null_mut(),
-            _lifetime: PhantomData,
+            _marker: PhantomData,
         }
     }
 

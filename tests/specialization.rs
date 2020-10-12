@@ -2,7 +2,6 @@
 
 use std::borrow::Cow;
 use std::ffi::CStr;
-use std::ffi::CString;
 use std::io;
 use std::io::IoSlice;
 use std::io::IoSliceMut;
@@ -14,7 +13,7 @@ const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
 fn test_write(bytes: &[u8]) -> io::Result<()> {
     let mut writer = Vec::new();
     write_bytes(&mut writer, bytes)?;
-    assert_eq!(bytes, writer.as_slice());
+    assert_eq!(bytes, writer);
     Ok(())
 }
 
@@ -36,7 +35,7 @@ fn test_multiple_writes() -> io::Result<()> {
     writer.extend_from_slice(b"world");
     write_bytes(&mut writer, &b"!"[..])?;
 
-    assert_eq!(b"Hello, world!", writer.as_slice());
+    assert_eq!(b"Hello, world!", &*writer);
 
     Ok(())
 }
@@ -48,16 +47,20 @@ fn test_implementations() -> io::Result<()> {
     write_bytes(&mut writer, &b"slice "[..])?;
     write_bytes(&mut writer, &Cow::Borrowed(&b"Cow::Borrowed "[..]))?;
     write_bytes(&mut writer, &Cow::<[_]>::Owned(b"Cow::Owned ".to_vec()))?;
-    write_bytes(&mut writer, CStr::from_bytes_with_nul(b"CStr \0").unwrap())?;
-    write_bytes(&mut writer, &CString::new(&b"CString "[..])?)?;
+    write_bytes(&mut writer, c_str(b"CStr \0"))?;
+    write_bytes(&mut writer, &c_str(b"CString \0").to_owned())?;
     write_bytes(&mut writer, &IoSlice::new(b"IoSlice "))?;
     write_bytes(&mut writer, &IoSliceMut::new(&mut b"IoSliceMut ".to_vec()))?;
     write_bytes(&mut writer, &b"Vec ".to_vec())?;
 
     assert_eq!(
-        &b"slice Cow::Borrowed Cow::Owned CStr CString IoSlice IoSliceMut Vec "[..],
-        writer.as_slice(),
+        b"slice Cow::Borrowed Cow::Owned CStr CString IoSlice IoSliceMut Vec ",
+        &*writer,
     );
 
-    Ok(())
+    return Ok(());
+
+    fn c_str(string: &[u8]) -> &CStr {
+        CStr::from_bytes_with_nul(string).unwrap()
+    }
 }

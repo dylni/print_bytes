@@ -18,15 +18,13 @@ fn test_process_pipe() -> io::Result<()> {
         },
     ))
     .arg(OsStr::from_bytes(WTF8_STRING).unwrap())
-    .stdout(Stdio::piped())
-    .spawn()?
-    .wait_with_output()?;
+    .stderr(Stdio::inherit())
+    .output()?;
 
-    let output = output.stdout.as_slice();
-    #[cfg(unix)]
-    assert_eq!(WTF8_STRING, output);
-    #[cfg(windows)]
-    {
+    let output = &*output.stdout;
+    if cfg!(not(windows)) {
+        assert_eq!(WTF8_STRING, output);
+    } else {
         use std::char::REPLACEMENT_CHARACTER;
 
         assert_ne!(WTF8_STRING, output);
@@ -45,20 +43,18 @@ fn test_process_pipe() -> io::Result<()> {
 #[cfg(feature = "specialization")]
 #[test]
 fn test_implementations() -> io::Result<()> {
-    use std::ffi::OsString;
     use std::path::Path;
-    use std::path::PathBuf;
 
     use print_bytes::write_bytes;
 
     let mut writer = Vec::new();
 
     write_bytes(&mut writer, OsStr::new("OsStr "))?;
-    write_bytes(&mut writer, &OsString::from("OsString "))?;
+    write_bytes(&mut writer, &OsStr::new("OsString ").to_os_string())?;
     write_bytes(&mut writer, Path::new("Path "))?;
-    write_bytes(&mut writer, &PathBuf::from("PathBuf "))?;
+    write_bytes(&mut writer, &Path::new("PathBuf ").to_path_buf())?;
 
-    assert_eq!(b"OsStr OsString Path PathBuf ", writer.as_slice());
+    assert_eq!(b"OsStr OsString Path PathBuf ", &*writer);
 
     Ok(())
 }

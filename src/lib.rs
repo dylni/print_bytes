@@ -33,7 +33,7 @@
 //!
 //! ### Nightly Features
 //!
-//! - **const_generics** -
+//! - **const\_generics** -
 //!   Provides an implementation of [`ToBytes`] for [`[u8; N]`][array]. As a
 //!   result, it can be output using functions in this crate.
 //!
@@ -75,7 +75,7 @@
     allow(incomplete_features)
 )]
 #![doc(html_root_url = "https://docs.rs/print_bytes/*")]
-#![cfg_attr(any(feature = "const_generics"), feature(const_generics))]
+#![cfg_attr(feature = "const_generics", feature(const_generics))]
 // Only require a nightly compiler when building documentation for docs.rs.
 // This is a private option that should not be used.
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
@@ -95,11 +95,8 @@ pub use bytes::Bytes;
 use bytes::BytesInner;
 pub use bytes::ToBytes;
 
-#[cfg(not(windows))]
-#[path = "common.rs"]
-mod imp;
-#[cfg(windows)]
-#[path = "windows.rs"]
+#[cfg_attr(windows, path = "windows.rs")]
+#[cfg_attr(not(windows), path = "common.rs")]
 mod imp;
 
 trait WriteBytes: Write {
@@ -149,14 +146,14 @@ where
 }
 
 macro_rules! r#impl {
-    ( $($type:ty),* $(,)? ) => {
+    ( $($type:ty),+ ) => {
         $(
             impl WriteBytes for $type {
                 fn to_console(&self) -> Option<imp::Console<'_>> {
                     imp::Console::from_handle(self)
                 }
             }
-        )*
+        )+
     };
 }
 r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);
@@ -195,8 +192,8 @@ macro_rules! r#impl {
         $(#[ $println_fn_attr:meta ])* $println_fn:ident ,
         $label:literal $(,)?
     ) => {
-        $(#[$print_fn_attr])*
         #[inline]
+        $(#[$print_fn_attr])*
         pub fn $print_fn<TValue>(value: &TValue)
         where
             TValue: ?Sized + ToBytes,
@@ -206,8 +203,8 @@ macro_rules! r#impl {
             }
         }
 
-        $(#[$println_fn_attr])*
         #[inline]
+        $(#[$println_fn_attr])*
         pub fn $println_fn<TValue>(value: &TValue)
         where
             TValue: ?Sized + ToBytes,
@@ -295,7 +292,6 @@ mod tests {
 
     const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80";
 
-    #[derive(Debug)]
     struct Writer {
         buffer: Vec<u8>,
         is_console: bool,
@@ -337,7 +333,7 @@ mod tests {
         let lossy_string = lossy_string.as_bytes();
         assert_ne!(INVALID_STRING, lossy_string);
 
-        let string = writer.buffer.as_slice();
+        let string = &*writer.buffer;
         if lossy {
             assert_eq!(lossy_string, string);
         } else {
