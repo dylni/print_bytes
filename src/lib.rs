@@ -33,7 +33,7 @@
 //!
 //! ### Nightly Features
 //!
-//! - **const\_generics** -
+//! - **min\_const\_generics** -
 //!   Provides an implementation of [`ToBytes`] for [`[u8; N]`][array]. As a
 //!   result, it can be output using functions in this crate.
 //!
@@ -76,6 +76,7 @@
 )]
 #![doc(html_root_url = "https://docs.rs/print_bytes/*")]
 #![cfg_attr(feature = "const_generics", feature(const_generics))]
+#![cfg_attr(feature = "min_const_generics", feature(min_const_generics))]
 // Only require a nightly compiler when building documentation for docs.rs.
 // This is a private option that should not be used.
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407

@@ -14,7 +14,7 @@ categories = ["command-line-interface", "os"]
 license = "MIT OR Apache-2.0"
 
 [package.metadata.docs.rs]
-all-features = true
+features = ["min_const_generics", "specialization"]
 rustc-args = ["--cfg", "print_bytes_docs_rs"]
 rustdoc-args = ["--cfg", "print_bytes_docs_rs"]
 
@@ -26,4 +26,5 @@ os_str_bytes = "2.0"
 
 [features]
 const_generics = []
+min_const_generics = []
 specialization = []

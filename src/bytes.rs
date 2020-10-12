@@ -73,7 +73,7 @@ impl ToBytes for [u8] {
     }
 }
 
-#[cfg(feature = "const_generics")]
+#[cfg(any(feature = "const_generics", feature = "min_const_generics"))]
 impl<const N: usize> ToBytes for [u8; N] {
     #[inline]
     fn to_bytes(&self) -> Bytes<'_> {
