@@ -22,7 +22,7 @@ Add the following lines to your "Cargo.toml" file:
 
 ```toml
 [dependencies]
-print_bytes = "0.3"
+print_bytes = "0.4"
 ```
 
 See the [documentation] for available functionality and examples.
