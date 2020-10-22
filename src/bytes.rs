@@ -18,8 +18,6 @@ pub(super) enum BytesInner<'a> {
 /// A value that can be printed by any of the functions in this crate.
 ///
 /// For more information, see [`ToBytes`].
-///
-/// [`ToBytes`]: trait.ToBytes.html
 #[derive(Debug)]
 pub struct Bytes<'a>(pub(super) BytesInner<'a>);
 
@@ -56,10 +54,9 @@ pub struct Bytes<'a>(pub(super) BytesInner<'a>);
 /// println_bytes(&ByteSlice(b"Hello, world!"));
 /// ```
 ///
-/// [`Bytes`]: struct.Bytes.html
-/// [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
-/// [`to_bytes`]: #tymethod.to_bytes
-/// [`ToString`]: https://doc.rust-lang.org/std/string/trait.ToString.html
+/// [`Display`]: ::std::fmt::Display
+/// [`to_bytes`]: Self::to_bytes
+/// [`ToString`]: ::std::string::ToString
 pub trait ToBytes {
     /// Creates a byte sequence that will be used to represent the instance.
     #[must_use]

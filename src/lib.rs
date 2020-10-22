@@ -61,13 +61,10 @@
 //! ```
 //!
 //! [array]: https://doc.rust-lang.org/std/primitive.array.html
-//! [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
-//! [`Path::display`]: https://doc.rust-lang.org/std/path/struct.Path.html#method.display
-//! [`Path::to_string_lossy`]: https://doc.rust-lang.org/std/path/struct.Path.html#method.to_string_lossy
-//! [`REPLACEMENT_CHARACTER`]: https://doc.rust-lang.org/std/char/constant.REPLACEMENT_CHARACTER.html
-//! [`String::from_utf8_lossy`]: https://doc.rust-lang.org/std/string/struct.String.html#method.from_utf8_lossy
-//! [`ToBytes`]: trait.ToBytes.html
-//! [`write_bytes`]: fn.write_bytes.html
+//! [`OsStr`]: ::std::ffi::OsStr
+//! [`Path::display`]: ::std::path::Path::display
+//! [`Path::to_string_lossy`]: ::std::path::Path::to_string_lossy
+//! [`REPLACEMENT_CHARACTER`]: ::std::char::REPLACEMENT_CHARACTER
 //! [wtf-8 audience]: https://simonsapin.github.io/wtf-8/#intended-audience
 
 #![cfg_attr(
@@ -170,8 +167,7 @@ r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);
 ///
 /// Returns an error if writing fails.
 ///
-/// [module]: index.html
-/// [`write!`]: https://doc.rust-lang.org/std/macro.write.html
+/// [module]: crate
 #[cfg_attr(print_bytes_docs_rs, doc(cfg(feature = "specialization")))]
 #[cfg(feature = "specialization")]
 #[inline]
@@ -229,8 +225,7 @@ r#impl!(
     ///
     /// Panics if writing to the stream fails.
     ///
-    /// [module]: index.html
-    /// [`print!`]: https://doc.rust-lang.org/std/macro.print.html
+    /// [module]: crate
     print_bytes,
     /// Prints a value to the standard output stream, followed by a newline.
     ///
@@ -244,8 +239,7 @@ r#impl!(
     ///
     /// Panics if writing to the stream fails.
     ///
-    /// [module]: index.html
-    /// [`println!`]: https://doc.rust-lang.org/std/macro.println.html
+    /// [module]: crate
     println_bytes,
     "stdout",
 );
@@ -262,8 +256,7 @@ r#impl!(
     ///
     /// Panics if writing to the stream fails.
     ///
-    /// [`eprint!`]: https://doc.rust-lang.org/std/macro.eprint.html
-    /// [module]: index.html
+    /// [module]: crate
     eprint_bytes,
     /// Prints a value to the standard error stream, followed by a newline.
     ///
@@ -277,8 +270,7 @@ r#impl!(
     ///
     /// Panics if writing to the stream fails.
     ///
-    /// [`eprintln!`]: https://doc.rust-lang.org/std/macro.eprintln.html
-    /// [module]: index.html
+    /// [module]: crate
     eprintln_bytes,
     "stderr",
 );
