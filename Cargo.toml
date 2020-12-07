@@ -1,6 +1,6 @@
 [package]
 name = "print_bytes"
-version = "0.4.1"
+version = "0.4.2"
 authors = ["dylni"]
 edition = "2018"
 exclude = [".*", "/rustfmt.toml", "/src/bin", "/tests"]
