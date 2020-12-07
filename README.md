@@ -31,7 +31,7 @@ See the [documentation] for available functionality and examples.
 
 The minimum supported Rust toolchain version is currently Rust 1.36.0.
 
-However, the `"min_const_generics"` and `"specialization"` features require a
+However, the "min\_const\_generics" and "specialization" features require a
 nightly compiler.
 
 ## License

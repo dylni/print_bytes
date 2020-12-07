@@ -70,6 +70,7 @@ impl ToBytes for [u8] {
     }
 }
 
+#[cfg_attr(print_bytes_docs_rs, doc(cfg(feature = "min_const_generics")))]
 #[cfg(any(feature = "const_generics", feature = "min_const_generics"))]
 impl<const N: usize> ToBytes for [u8; N] {
     #[inline]

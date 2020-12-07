@@ -167,7 +167,7 @@ r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);
 ///
 /// Returns an error if writing fails.
 ///
-/// [module]: crate
+/// [module]: self
 #[cfg_attr(print_bytes_docs_rs, doc(cfg(feature = "specialization")))]
 #[cfg(feature = "specialization")]
 #[inline]
@@ -225,7 +225,7 @@ r#impl!(
     ///
     /// Panics if writing to the stream fails.
     ///
-    /// [module]: crate
+    /// [module]: self
     print_bytes,
     /// Prints a value to the standard output stream, followed by a newline.
     ///
@@ -239,7 +239,7 @@ r#impl!(
     ///
     /// Panics if writing to the stream fails.
     ///
-    /// [module]: crate
+    /// [module]: self
     println_bytes,
     "stdout",
 );
@@ -256,7 +256,7 @@ r#impl!(
     ///
     /// Panics if writing to the stream fails.
     ///
-    /// [module]: crate
+    /// [module]: self
     eprint_bytes,
     /// Prints a value to the standard error stream, followed by a newline.
     ///
@@ -270,7 +270,7 @@ r#impl!(
     ///
     /// Panics if writing to the stream fails.
     ///
-    /// [module]: crate
+    /// [module]: self
     eprintln_bytes,
     "stderr",
 );
