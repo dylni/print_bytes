@@ -19,7 +19,7 @@ rustc-args = ["--cfg", "print_bytes_docs_rs"]
 rustdoc-args = [
     "--cfg", "print_bytes_docs_rs",
     "--extern-html-root-url", "std=https://doc.rust-lang.org",
-    "-Z unstable-options",
+    "-Zunstable-options",
 ]
 
 [target.'cfg(windows)'.dependencies]
