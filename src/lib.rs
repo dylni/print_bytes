@@ -71,6 +71,7 @@
     any(feature = "const_generics", feature = "specialization"),
     allow(incomplete_features)
 )]
+#![cfg_attr(feature = "min_const_generics", allow(stable_features))]
 #![doc(html_root_url = "https://docs.rs/print_bytes/*")]
 #![cfg_attr(feature = "const_generics", feature(const_generics))]
 #![cfg_attr(feature = "min_const_generics", feature(min_const_generics))]
