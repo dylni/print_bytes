@@ -17,7 +17,7 @@ fn test_process_pipe() -> io::Result<()> {
             "release"
         },
     ))
-    .arg(OsStr::from_bytes(WTF8_STRING).unwrap())
+    .arg(OsStr::from_raw_bytes(WTF8_STRING).unwrap())
     .stderr(Stdio::inherit())
     .output()?;
 
