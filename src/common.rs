@@ -4,6 +4,8 @@ use std::marker::PhantomData;
 
 #[cfg(any(target_os = "hermit", target_os = "redox", unix))]
 use std::os::unix as os;
+#[cfg(target_os = "wasi")]
+use std::os::wasi as os;
 
 use os::ffi::OsStrExt;
 use os::io::AsRawFd;

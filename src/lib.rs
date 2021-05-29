@@ -79,6 +79,7 @@
 // This is a private option that should not be used.
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
 #![cfg_attr(print_bytes_docs_rs, feature(doc_cfg))]
+#![cfg_attr(target_os = "wasi", feature(wasi_ext))]
 #![cfg_attr(feature = "specialization", feature(specialization))]
 #![warn(unused_results)]
 

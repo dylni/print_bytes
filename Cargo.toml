@@ -10,7 +10,7 @@ Print bytes as losslessly as possible
 repository = "https://github.com/dylni/print_bytes"
 readme = "README.md"
 keywords = ["bytes", "osstr", "path", "print", "windows"]
-categories = ["command-line-interface", "os"]
+categories = ["command-line-interface", "os", "wasm"]
 license = "MIT OR Apache-2.0"
 
 [package.metadata.docs.rs]
