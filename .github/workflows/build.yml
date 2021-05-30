@@ -37,7 +37,25 @@ jobs:
     strategy:
       matrix:
         target: [x86_64-unknown-redox]
+        # Clippy might not be packaged with the current nightly compiler.
         version: [1.36.0, stable, beta]
+  build-other-unstable:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        fetch-depth: 10
+    - run: rustup install nightly
+    - run: rustup default nightly
+    - run: rustup target add ${{ matrix.target }}
+    - run: rm --recursive src/bin
+    # Clippy might not be packaged with the current nightly compiler.
+    - run: cargo rustc --target ${{ matrix.target }} -- -Dwarnings
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        target: [wasm32-wasi]
   test:
     needs: [build]
     runs-on: ${{ matrix.platform }}
