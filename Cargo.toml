@@ -26,7 +26,7 @@ rustdoc-args = [
 winapi = { version = "0.3", features = ["consoleapi"] }
 
 [dev-dependencies]
-os_str_bytes = "3.0"
+os_str_bytes = "4.1"
 
 [features]
 const_generics = []
