@@ -22,8 +22,7 @@ rustdoc-args = ["--cfg", "print_bytes_docs_rs"]
 winapi = { version = "0.3", features = ["consoleapi"] }
 
 [dev-dependencies]
-os_str_bytes = "3.0"
+os_str_bytes = "4.2"
 
 [features]
-min_const_generics = []
 specialization = []

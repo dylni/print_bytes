@@ -38,7 +38,7 @@ jobs:
       matrix:
         target: [x86_64-unknown-redox]
         # Clippy might not be packaged with the current nightly compiler.
-        version: [1.36.0, stable, beta]
+        version: [1.51.0, stable, beta]
   build-other-unstable:
     needs: [build]
     runs-on: ubuntu-latest
@@ -77,4 +77,4 @@ jobs:
     strategy:
       matrix:
         platform: [macos-latest, ubuntu-latest, windows-latest]
-        version: [1.36.0, stable, nightly]
+        version: [1.51.0, stable, nightly]

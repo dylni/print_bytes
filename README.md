@@ -29,10 +29,17 @@ See the [documentation] for available functionality and examples.
 
 ## Rust version support
 
-The minimum supported Rust toolchain version is currently Rust 1.36.0.
+The minimum supported Rust toolchain version is currently Rust 1.51.0.
 
-However, the "min\_const\_generics" and "specialization" features require a
-nightly compiler.
+Minor version updates may increase these version requirements. However, the
+previous two Rust releases will always be supported. If the minimum Rust
+version must not be increased, use a tilde requirement to prevent updating this
+crate's minor version:
+
+```toml
+[dependencies]
+print_bytes = "~0.4"
+```
 
 ## License
 
