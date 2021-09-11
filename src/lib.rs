@@ -33,10 +33,6 @@
 //!
 //! ### Nightly Features
 //!
-//! - **min\_const\_generics** -
-//!   Provides an implementation of [`ToBytes`] for [`[u8; N]`][array]. As a
-//!   result, it can be output using functions in this crate.
-//!
 //! - **specialization** -
 //!   Provides [`write_bytes`].
 //!
@@ -67,8 +63,6 @@
 //! [wtf-8 audience]: https://simonsapin.github.io/wtf-8/#intended-audience
 
 #![cfg_attr(feature = "specialization", allow(incomplete_features))]
-#![cfg_attr(feature = "min_const_generics", allow(stable_features))]
-#![cfg_attr(feature = "min_const_generics", feature(min_const_generics))]
 // Only require a nightly compiler when building documentation for docs.rs.
 // This is a private option that should not be used.
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
@@ -287,7 +281,7 @@ mod tests {
     }
 
     impl Writer {
-        fn new(is_console: bool) -> Self {
+        const fn new(is_console: bool) -> Self {
             Self {
                 buffer: Vec::new(),
                 is_console,
@@ -307,13 +301,9 @@ mod tests {
 
     impl WriteBytes for Writer {
         fn to_console(&self) -> Option<imp::Console<'_>> {
-            if self.is_console {
-                // SAFETY: Since no platform strings are being written, no test
-                // should ever write to this console.
-                Some(unsafe { imp::Console::null() })
-            } else {
-                None
-            }
+            // SAFETY: Since no platform strings are being written, no test
+            // should ever write to this console.
+            self.is_console.then(|| unsafe { imp::Console::null() })
         }
     }
 

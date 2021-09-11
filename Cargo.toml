@@ -25,5 +25,4 @@ winapi = { version = "0.3", features = ["consoleapi"] }
 os_str_bytes = "4.2"
 
 [features]
-min_const_generics = []
 specialization = []

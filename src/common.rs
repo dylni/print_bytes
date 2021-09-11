@@ -2,7 +2,7 @@ use std::ffi::OsStr;
 use std::io;
 use std::marker::PhantomData;
 
-#[cfg(any(target_os = "hermit", target_os = "redox", unix))]
+#[cfg(any(target_os = "hermit", unix))]
 use std::os::unix as os;
 #[cfg(target_os = "wasi")]
 use std::os::wasi as os;
