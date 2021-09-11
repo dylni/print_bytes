@@ -8,7 +8,7 @@
 //! byte sequence.
 //!
 //! Instead, this crate only performs a lossy conversion when the output device
-//! is known to require unicode, to make output as accurate as possible. When
+//! is known to require Unicode, to make output as accurate as possible. When
 //! necessary, any character sequence that cannot be represented will be
 //! replaced with [`REPLACEMENT_CHARACTER`]. That convention is shared with the
 //! standard library, which uses the same character for its lossy conversion
@@ -60,7 +60,6 @@
 //! # Ok::<_, io::Error>(())
 //! ```
 //!
-//! [array]: https://doc.rust-lang.org/std/primitive.array.html
 //! [`OsStr`]: ::std::ffi::OsStr
 //! [`Path::display`]: ::std::path::Path::display
 //! [`Path::to_string_lossy`]: ::std::path::Path::to_string_lossy
@@ -69,7 +68,6 @@
 
 #![cfg_attr(feature = "specialization", allow(incomplete_features))]
 #![cfg_attr(feature = "min_const_generics", allow(stable_features))]
-#![doc(html_root_url = "https://docs.rs/print_bytes/*")]
 #![cfg_attr(feature = "min_const_generics", feature(min_const_generics))]
 // Only require a nightly compiler when building documentation for docs.rs.
 // This is a private option that should not be used.

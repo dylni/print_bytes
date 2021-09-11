@@ -27,7 +27,7 @@ impl<'a> Console<'a> {
     {
         let handle = handle.as_raw_handle() as HANDLE;
         // The mode is not important, since this call only succeeds for Windows
-        // Console. Other streams usually do not require unicode writes.
+        // Console. Other streams usually do not require Unicode writes.
         let mut mode = 0;
         if unsafe { GetConsoleMode(handle, &mut mode) } == TRUE {
             Some(Self {
@@ -88,9 +88,10 @@ pub(super) fn write_os<TWriter>(
 where
     TWriter: ?Sized + WriteBytes,
 {
-    if let Some(mut console) = writer.to_console() {
-        console.write_os(os_string)
-    } else {
-        writer.write_all(os_string.to_string_lossy().as_bytes())
-    }
+    writer
+        .to_console()
+        .map(|mut x| x.write_os(os_string))
+        .unwrap_or_else(|| {
+            writer.write_all(os_string.to_string_lossy().as_bytes())
+        })
 }

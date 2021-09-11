@@ -9,7 +9,7 @@ lossy; they misrepresent some valid paths in output. The same is true when
 using [`String::from_utf8_lossy`] to print any other UTF-8–like byte sequence.
 
 Instead, this crate only performs a lossy conversion when the output device is
-known to require unicode, to make output as accurate as possible. When
+known to require Unicode, to make output as accurate as possible. When
 necessary, any character sequence that cannot be represented will be replaced
 with [`REPLACEMENT_CHARACTER`]. That convention is shared with the standard
 library, which uses the same character for its lossy conversion functions.

@@ -16,11 +16,7 @@ license = "MIT OR Apache-2.0"
 [package.metadata.docs.rs]
 all-features = true
 rustc-args = ["--cfg", "print_bytes_docs_rs"]
-rustdoc-args = [
-    "--cfg", "print_bytes_docs_rs",
-    "--extern-html-root-url", "std=https://doc.rust-lang.org",
-    "-Zunstable-options",
-]
+rustdoc-args = ["--cfg", "print_bytes_docs_rs"]
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["consoleapi"] }
