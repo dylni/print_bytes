@@ -14,7 +14,7 @@ categories = ["command-line-interface", "os", "wasm"]
 license = "MIT OR Apache-2.0"
 
 [package.metadata.docs.rs]
-features = ["min_const_generics", "specialization"]
+all-features = true
 rustc-args = ["--cfg", "print_bytes_docs_rs"]
 rustdoc-args = [
     "--cfg", "print_bytes_docs_rs",
@@ -29,6 +29,5 @@ winapi = { version = "0.3", features = ["consoleapi"] }
 os_str_bytes = "3.0"
 
 [features]
-const_generics = []
 min_const_generics = []
 specialization = []

@@ -71,7 +71,7 @@ jobs:
     - if: matrix.version == 'nightly'
       run: cargo test --features specialization
     - if: matrix.version == 'nightly'
-      run: cargo test --features 'min_const_generics specialization'
+      run: cargo test --all-features
     - run: cargo test --release
     timeout-minutes: 10
     strategy:

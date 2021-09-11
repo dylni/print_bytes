@@ -67,13 +67,9 @@
 //! [`REPLACEMENT_CHARACTER`]: ::std::char::REPLACEMENT_CHARACTER
 //! [wtf-8 audience]: https://simonsapin.github.io/wtf-8/#intended-audience
 
-#![cfg_attr(
-    any(feature = "const_generics", feature = "specialization"),
-    allow(incomplete_features)
-)]
+#![cfg_attr(feature = "specialization", allow(incomplete_features))]
 #![cfg_attr(feature = "min_const_generics", allow(stable_features))]
 #![doc(html_root_url = "https://docs.rs/print_bytes/*")]
-#![cfg_attr(feature = "const_generics", feature(const_generics))]
 #![cfg_attr(feature = "min_const_generics", feature(min_const_generics))]
 // Only require a nightly compiler when building documentation for docs.rs.
 // This is a private option that should not be used.
