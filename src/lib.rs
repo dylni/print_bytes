@@ -67,7 +67,6 @@
 // This is a private option that should not be used.
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
 #![cfg_attr(print_bytes_docs_rs, feature(doc_cfg))]
-#![cfg_attr(target_os = "wasi", feature(wasi_ext))]
 #![cfg_attr(feature = "specialization", feature(specialization))]
 #![warn(unused_results)]
 
@@ -79,36 +78,51 @@ use std::io::StdoutLock;
 use std::io::Write;
 
 mod bytes;
-pub use bytes::Bytes;
-use bytes::BytesInner;
+pub use bytes::ByteStr;
+use bytes::ByteStrInner;
 pub use bytes::ToBytes;
+#[cfg(any(doc, windows))]
+pub use bytes::WideStr;
 
-#[cfg_attr(windows, path = "windows.rs")]
-#[cfg_attr(not(windows), path = "common.rs")]
-mod imp;
+#[cfg(windows)]
+mod console;
+#[cfg(windows)]
+use console::Console;
 
 trait WriteBytes: Write {
-    fn to_console(&self) -> Option<imp::Console<'_>>;
+    #[cfg(windows)]
+    fn to_console(&self) -> Option<Console<'_>>;
 
     #[inline]
     fn write_bytes<TValue>(&mut self, value: &TValue) -> io::Result<()>
     where
         TValue: ?Sized + ToBytes,
     {
-        let value = value.to_bytes().0;
-        match value {
-            BytesInner::Bytes(value) => {
-                let buffer;
-                let value = if self.to_console().is_some() {
-                    buffer = String::from_utf8_lossy(value);
+        #[cfg_attr(not(windows), allow(unused_mut))]
+        let mut lossy = false;
+        #[cfg(windows)]
+        if let Some(mut console) = self.to_console() {
+            if let Some(string) = value.to_wide() {
+                return console.write_wide_all(&string.0);
+            }
+            lossy = true;
+        }
+
+        let buffer;
+        let string = value.to_bytes();
+        let string = match &string.0 {
+            ByteStrInner::Bytes(string) => {
+                if lossy {
+                    buffer = String::from_utf8_lossy(string);
                     buffer.as_bytes()
                 } else {
-                    &value
-                };
-                self.write_all(value)
+                    string
+                }
             }
-            BytesInner::OsStr(value) => imp::write_os(self, value),
-        }
+            #[cfg(windows)]
+            ByteStrInner::Str(string) => string.as_bytes(),
+        };
+        self.write_all(string)
     }
 }
 
@@ -117,7 +131,8 @@ impl<T> WriteBytes for T
 where
     T: ?Sized + Write,
 {
-    default fn to_console(&self) -> Option<imp::Console<'_>> {
+    #[cfg(windows)]
+    default fn to_console(&self) -> Option<Console<'_>> {
         None
     }
 }
@@ -128,7 +143,8 @@ where
     T: ?Sized + WriteBytes,
     &'a mut T: Write,
 {
-    default fn to_console(&self) -> Option<imp::Console<'_>> {
+    #[cfg(windows)]
+    default fn to_console(&self) -> Option<Console<'_>> {
         (**self).to_console()
     }
 }
@@ -137,8 +153,9 @@ macro_rules! r#impl {
     ( $($type:ty),+ ) => {
         $(
             impl WriteBytes for $type {
-                fn to_console(&self) -> Option<imp::Console<'_>> {
-                    imp::Console::from_handle(self)
+                #[cfg(windows)]
+                fn to_console(&self) -> Option<Console<'_>> {
+                    Console::from_handle(self)
                 }
             }
         )+
@@ -265,12 +282,12 @@ r#impl!(
     "stderr",
 );
 
-#[cfg(test)]
+#[cfg(all(test, windows))]
 mod tests {
     use std::io;
     use std::io::Write;
 
-    use super::imp;
+    use super::Console;
     use super::WriteBytes;
 
     const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80";
@@ -300,10 +317,10 @@ mod tests {
     }
 
     impl WriteBytes for Writer {
-        fn to_console(&self) -> Option<imp::Console<'_>> {
+        fn to_console(&self) -> Option<Console<'_>> {
             // SAFETY: Since no platform strings are being written, no test
             // should ever write to this console.
-            self.is_console.then(|| unsafe { imp::Console::null() })
+            self.is_console.then(|| unsafe { Console::null() })
         }
     }
 

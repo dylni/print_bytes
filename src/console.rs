@@ -1,8 +1,6 @@
 use std::convert::TryInto;
-use std::ffi::OsStr;
 use std::io;
 use std::marker::PhantomData;
-use std::os::windows::ffi::OsStrExt;
 use std::os::windows::io::AsRawHandle;
 use std::ptr;
 
@@ -12,8 +10,6 @@ use winapi::shared::minwindef::TRUE;
 use winapi::um::consoleapi::GetConsoleMode;
 use winapi::um::consoleapi::WriteConsoleW;
 use winapi::um::winnt::HANDLE;
-
-use super::WriteBytes;
 
 pub(super) struct Console<'a> {
     handle: HANDLE,
@@ -70,28 +66,14 @@ impl<'a> Console<'a> {
         }
     }
 
-    fn write_os(&mut self, os_string: &OsStr) -> io::Result<()> {
-        let string: Vec<_> = os_string.encode_wide().collect();
-        let mut string: &[_] = &string;
+    pub(super) fn write_wide_all(
+        &mut self,
+        mut string: &[u16],
+    ) -> io::Result<()> {
         while !string.is_empty() {
             let written_length = self.write_wide(string)?;
             string = &string[written_length..];
         }
         Ok(())
     }
-}
-
-pub(super) fn write_os<TWriter>(
-    writer: &mut TWriter,
-    os_string: &OsStr,
-) -> io::Result<()>
-where
-    TWriter: ?Sized + WriteBytes,
-{
-    writer
-        .to_console()
-        .map(|mut x| x.write_os(os_string))
-        .unwrap_or_else(|| {
-            writer.write_all(os_string.to_string_lossy().as_bytes())
-        })
 }
