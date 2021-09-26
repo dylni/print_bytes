@@ -61,8 +61,22 @@ impl<'a> Console<'a> {
         mut string: &[u16],
     ) -> io::Result<()> {
         while !string.is_empty() {
-            let written_length = self.write_wide(string)?;
-            string = &string[written_length..];
+            match self.write_wide(string) {
+                Ok(written_length) => {
+                    if written_length == 0 {
+                        return Err(io::Error::new(
+                            io::ErrorKind::WriteZero,
+                            "failed to write whole buffer",
+                        ));
+                    }
+                    string = &string[written_length..];
+                }
+                Err(error) => {
+                    if error.kind() != io::ErrorKind::Interrupted {
+                        return Err(error);
+                    }
+                }
+            }
         }
         Ok(())
     }
