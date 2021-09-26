@@ -4,7 +4,6 @@ use std::marker::PhantomData;
 use std::os::windows::io::AsRawHandle;
 use std::ptr;
 
-use winapi::ctypes::c_void;
 use winapi::shared::minwindef::DWORD;
 use winapi::shared::minwindef::TRUE;
 use winapi::um::consoleapi::GetConsoleMode;
@@ -21,18 +20,14 @@ impl<'a> Console<'a> {
     where
         THandle: AsRawHandle,
     {
-        let handle = handle.as_raw_handle() as HANDLE;
+        let handle = handle.as_raw_handle().cast();
         // The mode is not important, since this call only succeeds for Windows
         // Console. Other streams usually do not require Unicode writes.
         let mut mode = 0;
-        if unsafe { GetConsoleMode(handle, &mut mode) } == TRUE {
-            Some(Self {
-                handle,
-                _marker: PhantomData,
-            })
-        } else {
-            None
-        }
+        (unsafe { GetConsoleMode(handle, &mut mode) } == TRUE).then(|| Self {
+            handle,
+            _marker: PhantomData,
+        })
     }
 
     // Writing to the returned instance causes undefined behavior.
@@ -45,25 +40,20 @@ impl<'a> Console<'a> {
     }
 
     fn write_wide(&mut self, string: &[u16]) -> io::Result<usize> {
-        let length = string
-            .len()
-            .try_into()
-            .unwrap_or_else(|_| DWORD::max_value());
+        let length = string.len().try_into().unwrap_or(DWORD::MAX);
         let mut written_length = 0;
         let result = unsafe {
             WriteConsoleW(
                 self.handle,
-                string.as_ptr() as *const c_void,
+                string.as_ptr().cast(),
                 length,
                 &mut written_length,
                 ptr::null_mut(),
             )
         };
-        if result == TRUE {
-            Ok(written_length as usize)
-        } else {
-            Err(io::Error::last_os_error())
-        }
+        (result == TRUE)
+            .then(|| written_length as usize)
+            .ok_or_else(io::Error::last_os_error)
     }
 
     pub(super) fn write_wide_all(

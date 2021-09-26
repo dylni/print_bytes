@@ -165,7 +165,7 @@ defer_impl!(CStr, to_bytes);
 defer_impl!(CString, as_c_str);
 defer_impl!(IoSlice<'_>, deref);
 defer_impl!(IoSliceMut<'_>, deref);
-defer_impl!(Vec::<u8>, as_slice);
+defer_impl!(Vec<u8>, as_slice);
 
 #[cfg(any(target_os = "hermit", target_os = "wasi", unix, windows))]
 mod os_str {

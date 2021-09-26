@@ -32,7 +32,7 @@ fn test_process_pipe() -> io::Result<()> {
         let mut replacement = [0; 4];
         let replacement = REPLACEMENT_CHARACTER.encode_utf8(&mut replacement);
 
-        let mut lossy_string = WTF8_STRING.to_vec();
+        let mut lossy_string = WTF8_STRING.to_owned();
         let _ = lossy_string.splice(3..6, replacement.bytes());
         assert_eq!(lossy_string, output);
     }
@@ -50,9 +50,9 @@ fn test_implementations() -> io::Result<()> {
     let mut writer = Vec::new();
 
     write_bytes(&mut writer, OsStr::new("OsStr "))?;
-    write_bytes(&mut writer, &OsStr::new("OsString ").to_os_string())?;
+    write_bytes(&mut writer, &OsStr::new("OsString ").to_owned())?;
     write_bytes(&mut writer, Path::new("Path "))?;
-    write_bytes(&mut writer, &Path::new("PathBuf ").to_path_buf())?;
+    write_bytes(&mut writer, &Path::new("PathBuf ").to_owned())?;
 
     assert_eq!(b"OsStr OsString Path PathBuf ", &*writer);
 

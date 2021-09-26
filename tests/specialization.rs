@@ -50,8 +50,11 @@ fn test_implementations() -> io::Result<()> {
     write_bytes(&mut writer, c_str(b"CStr \0"))?;
     write_bytes(&mut writer, &c_str(b"CString \0").to_owned())?;
     write_bytes(&mut writer, &IoSlice::new(b"IoSlice "))?;
-    write_bytes(&mut writer, &IoSliceMut::new(&mut b"IoSliceMut ".to_vec()))?;
-    write_bytes(&mut writer, &b"Vec ".to_vec())?;
+    write_bytes(
+        &mut writer,
+        &IoSliceMut::new(&mut b"IoSliceMut ".to_owned()),
+    )?;
+    write_bytes(&mut writer, &b"Vec ".to_owned())?;
 
     assert_eq!(
         b"slice Cow::Borrowed Cow::Owned CStr CString IoSlice IoSliceMut Vec ",

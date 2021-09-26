@@ -165,7 +165,7 @@ r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);
 
 /// Writes a value to a "writer".
 ///
-/// This function is similar to [`write!`], but it does not take a format
+/// This function is similar to [`write!`] but does not take a format
 /// parameter.
 ///
 /// For more information, see [the module-level documentation][module].
@@ -223,7 +223,7 @@ r#impl!(
     io::stdout(),
     /// Prints a value to the standard output stream.
     ///
-    /// This function is similar to [`print!`], but it does not take a format
+    /// This function is similar to [`print!`] but does not take a format
     /// parameter.
     ///
     /// For more information, see [the module-level documentation][module].
@@ -236,9 +236,8 @@ r#impl!(
     print_bytes,
     /// Prints a value to the standard output stream, followed by a newline.
     ///
-    /// This function is similar to [`println!`], but it does not take a format
-    /// parameter. A line feed (`\n`) is still used for the newline, with no
-    /// additional carriage return (`\r`) printed.
+    /// This function is similar to [`println!`] but does not take a format
+    /// parameter.
     ///
     /// For more information, see [the module-level documentation][module].
     ///
@@ -254,7 +253,7 @@ r#impl!(
     io::stderr(),
     /// Prints a value to the standard error stream.
     ///
-    /// This function is similar to [`eprint!`], but it does not take a format
+    /// This function is similar to [`eprint!`] but does not take a format
     /// parameter.
     ///
     /// For more information, see [the module-level documentation][module].
@@ -267,9 +266,8 @@ r#impl!(
     eprint_bytes,
     /// Prints a value to the standard error stream, followed by a newline.
     ///
-    /// This function is similar to [`eprintln!`], but it does not take a
-    /// format parameter. A line feed (`\n`) is still used for the newline,
-    /// with no additional carriage return (`\r`) printed.
+    /// This function is similar to [`eprintln!`] but does not take a format
+    /// parameter.
     ///
     /// For more information, see [the module-level documentation][module].
     ///
