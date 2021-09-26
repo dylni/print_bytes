@@ -39,22 +39,3 @@ fn test_process_pipe() -> io::Result<()> {
 
     Ok(())
 }
-
-#[cfg(feature = "specialization")]
-#[test]
-fn test_implementations() -> io::Result<()> {
-    use std::path::Path;
-
-    use print_bytes::write_bytes;
-
-    let mut writer = Vec::new();
-
-    write_bytes(&mut writer, OsStr::new("OsStr "))?;
-    write_bytes(&mut writer, &OsStr::new("OsString ").to_owned())?;
-    write_bytes(&mut writer, Path::new("Path "))?;
-    write_bytes(&mut writer, &Path::new("PathBuf ").to_owned())?;
-
-    assert_eq!(b"OsStr OsString Path PathBuf ", &*writer);
-
-    Ok(())
-}

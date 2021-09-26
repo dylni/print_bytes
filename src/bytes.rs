@@ -1,8 +1,6 @@
 use std::borrow::Cow;
 use std::ffi::CStr;
 use std::ffi::CString;
-use std::io::IoSlice;
-use std::io::IoSliceMut;
 use std::ops::Deref;
 
 #[derive(Debug)]
@@ -163,8 +161,6 @@ macro_rules! defer_impl {
 }
 defer_impl!(CStr, to_bytes);
 defer_impl!(CString, as_c_str);
-defer_impl!(IoSlice<'_>, deref);
-defer_impl!(IoSliceMut<'_>, deref);
 defer_impl!(Vec<u8>, as_slice);
 
 #[cfg(any(target_os = "hermit", target_os = "wasi", unix, windows))]
