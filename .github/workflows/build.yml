@@ -3,18 +3,23 @@ name: build
 on:
   pull_request:
   push:
+    branches:
+    - master
   schedule:
   - cron: 0 0 * * FRI
 
 jobs:
   build:
     runs-on: ${{ matrix.platform }}
+    env:
+      RUSTFLAGS: -Dwarnings
     steps:
     - uses: actions/checkout@v1
       with:
         fetch-depth: 10
-    - run: cargo clippy -- -Dwarnings
-    - run: cargo clippy --tests -- -Dwarnings
+    - run: cargo install cargo-hack
+    - run: cargo hack clippy --feature-powerset --optional-deps --exclude-features 'specialization'
+    - run: cargo hack clippy --feature-powerset --optional-deps --exclude-features 'specialization' --tests
     - run: cargo fmt -- --check
     timeout-minutes: 5
     strategy:
@@ -23,39 +28,36 @@ jobs:
   build-other:
     needs: [build]
     runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -Dwarnings
+      flags: --feature-powerset --optional-deps --target ${{ matrix.target }}
     steps:
     - uses: actions/checkout@v1
       with:
         fetch-depth: 10
     - run: rustup install ${{ matrix.version }}
     - run: rustup default ${{ matrix.version }}
-    - run: rustup component add clippy
+    # Clippy might not be packaged with the current nightly compiler or might
+    # include broken lints on the nightly channel.
+    #
+    # Running Clippy on older versions prevents taking advantage of
+    # improvements to its lints.
+    - if: matrix.version == 'stable'
+      run: rustup component add clippy
     - run: rustup target add ${{ matrix.target }}
-    - run: rm --recursive src/bin
-    - run: cargo clippy --target ${{ matrix.target }} -- -Dwarnings
+    - run: rm -r src/bin
+    - run: cargo install cargo-hack
+    - if: matrix.version == '1.51.0'
+      run: cargo hack rustc ${{ env.flags }} --exclude-features 'specialization'
+    - if: matrix.version == 'stable'
+      run: cargo hack clippy ${{ env.flags }} --exclude-features 'specialization'
+    - if: matrix.version == 'nightly'
+      run: cargo hack rustc ${{ env.flags }}
     timeout-minutes: 5
     strategy:
       matrix:
-        target: [x86_64-unknown-redox]
-        # Clippy might not be packaged with the current nightly compiler.
-        version: [1.51.0, stable, beta]
-  build-other-unstable:
-    needs: [build]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-      with:
-        fetch-depth: 10
-    - run: rustup install nightly
-    - run: rustup default nightly
-    - run: rustup target add ${{ matrix.target }}
-    - run: rm --recursive src/bin
-    # Clippy might not be packaged with the current nightly compiler.
-    - run: cargo rustc --target ${{ matrix.target }} -- -Dwarnings
-    timeout-minutes: 5
-    strategy:
-      matrix:
-        target: [wasm32-wasi]
+        target: [wasm32-wasi, x86_64-unknown-redox]
+        version: [1.51.0, stable, nightly]
   test:
     needs: [build]
     runs-on: ${{ matrix.platform }}
@@ -67,12 +69,11 @@ jobs:
         fetch-depth: 10
     - run: rustup install ${{ matrix.version }}
     - run: rustup default ${{ matrix.version }}
-    - run: cargo test
-    - if: matrix.version == 'nightly'
-      run: cargo test --features specialization
+    - run: cargo test --no-default-features
     - if: matrix.version == 'nightly'
       run: cargo test --all-features
-    - run: cargo test --release
+    - if: matrix.version == 'nightly'
+      run: cargo test --all-features --release
     timeout-minutes: 10
     strategy:
       matrix:
