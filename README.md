@@ -31,7 +31,7 @@ See the [documentation] for available functionality and examples.
 
 The minimum supported Rust toolchain version is currently Rust 1.51.0.
 
-Minor version updates may increase these version requirements. However, the
+Minor version updates may increase this version requirement. However, the
 previous two Rust releases will always be supported. If the minimum Rust
 version must not be increased, use a tilde requirement to prevent updating this
 crate's minor version:
