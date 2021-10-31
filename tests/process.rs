@@ -9,17 +9,10 @@ const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
 
 #[test]
 fn test_process_pipe() -> io::Result<()> {
-    let output = Command::new(format!(
-        "target/{}/writer",
-        if cfg!(debug_assertions) {
-            "debug"
-        } else {
-            "release"
-        },
-    ))
-    .arg(OsStr::from_raw_bytes(WTF8_STRING).unwrap())
-    .stderr(Stdio::inherit())
-    .output()?;
+    let output = Command::new(env!("CARGO_BIN_EXE_writer"))
+        .arg(OsStr::from_raw_bytes(WTF8_STRING).unwrap())
+        .stderr(Stdio::inherit())
+        .output()?;
 
     let output = &*output.stdout;
     if cfg!(not(windows)) {
