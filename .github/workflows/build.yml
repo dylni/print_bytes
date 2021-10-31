@@ -47,17 +47,17 @@ jobs:
     - run: rustup target add ${{ matrix.target }}
     - run: rm -r src/bin
     - run: cargo install cargo-hack
-    - if: matrix.version == '1.51.0'
-      run: cargo hack rustc ${{ env.flags }} --exclude-features 'specialization'
     - if: matrix.version == 'stable'
       run: cargo hack clippy ${{ env.flags }} --exclude-features 'specialization'
     - if: matrix.version == 'nightly'
       run: cargo hack rustc ${{ env.flags }}
+    - if: matrix.version != 'stable' && matrix.version != 'nightly'
+      run: cargo hack rustc ${{ env.flags }} --exclude-features 'specialization'
     timeout-minutes: 5
     strategy:
       matrix:
         target: [wasm32-wasi, x86_64-unknown-redox]
-        version: [1.51.0, stable, nightly]
+        version: [1.51.0, stable, beta, nightly]
   test:
     needs: [build]
     runs-on: ${{ matrix.platform }}
@@ -78,4 +78,4 @@ jobs:
     strategy:
       matrix:
         platform: [macos-latest, ubuntu-latest, windows-latest]
-        version: [1.51.0, stable, nightly]
+        version: [1.51.0, stable, beta, nightly]
