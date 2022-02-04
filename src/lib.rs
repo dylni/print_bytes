@@ -68,6 +68,7 @@
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
 #![cfg_attr(print_bytes_docs_rs, feature(doc_cfg))]
 #![cfg_attr(feature = "specialization", feature(specialization))]
+#![warn(unsafe_op_in_unsafe_fn)]
 #![warn(unused_results)]
 
 use std::io;
