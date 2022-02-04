@@ -3,6 +3,7 @@ name = "print_bytes"
 version = "0.5.0"
 authors = ["dylni"]
 edition = "2018"
+rust-version = "1.52.0"
 exclude = [".*", "/rustfmt.toml", "/src/bin", "/tests"]
 description = """
 Print bytes as losslessly as possible
@@ -22,7 +23,7 @@ rustdoc-args = ["--cfg", "print_bytes_docs_rs"]
 winapi = { version = "0.3", features = ["consoleapi"] }
 
 [dev-dependencies]
-os_str_bytes = "5.0"
+os_str_bytes = "6.0"
 
 [features]
 specialization = []
