@@ -95,9 +95,9 @@ trait WriteBytes: Write {
     fn to_console(&self) -> Option<Console<'_>>;
 
     #[inline]
-    fn write_bytes<TValue>(&mut self, value: &TValue) -> io::Result<()>
+    fn write_bytes<T>(&mut self, value: &T) -> io::Result<()>
     where
-        TValue: ?Sized + ToBytes,
+        T: ?Sized + ToBytes,
     {
         #[cfg_attr(not(windows), allow(unused_mut))]
         let mut lossy = false;
@@ -179,13 +179,10 @@ r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);
 #[cfg_attr(print_bytes_docs_rs, doc(cfg(feature = "specialization")))]
 #[cfg(feature = "specialization")]
 #[inline]
-pub fn write_bytes<TValue, TWriter>(
-    mut writer: TWriter,
-    value: &TValue,
-) -> io::Result<()>
+pub fn write_bytes<T, W>(mut writer: W, value: &T) -> io::Result<()>
 where
-    TValue: ?Sized + ToBytes,
-    TWriter: Write,
+    T: ?Sized + ToBytes,
+    W: Write,
 {
     writer.write_bytes(value)
 }
@@ -199,9 +196,9 @@ macro_rules! r#impl {
     ) => {
         #[inline]
         $(#[$print_fn_attr])*
-        pub fn $print_fn<TValue>(value: &TValue)
+        pub fn $print_fn<T>(value: &T)
         where
-            TValue: ?Sized + ToBytes,
+            T: ?Sized + ToBytes,
         {
             if let Err(error) = $writer.write_bytes(value) {
                 panic!("failed writing to {}: {}", $label, error);
@@ -210,9 +207,9 @@ macro_rules! r#impl {
 
         #[inline]
         $(#[$println_fn_attr])*
-        pub fn $println_fn<TValue>(value: &TValue)
+        pub fn $println_fn<T>(value: &T)
         where
-            TValue: ?Sized + ToBytes,
+            T: ?Sized + ToBytes,
         {
             let _ = $writer.lock();
             $print_fn(value);
@@ -336,9 +333,9 @@ mod tests {
         }
     }
 
-    fn test<TWriteFn>(mut write_fn: TWriteFn) -> io::Result<()>
+    fn test<F>(mut write_fn: F) -> io::Result<()>
     where
-        TWriteFn: FnMut(&mut Writer, &[u8]) -> io::Result<()>,
+        F: FnMut(&mut Writer, &[u8]) -> io::Result<()>,
     {
         let mut writer = Writer::new(false);
         write_fn(&mut writer, INVALID_STRING)?;

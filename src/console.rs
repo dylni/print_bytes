@@ -16,9 +16,9 @@ pub(super) struct Console<'a> {
 }
 
 impl<'a> Console<'a> {
-    pub(super) fn from_handle<THandle>(handle: &'a THandle) -> Option<Self>
+    pub(super) fn from_handle<T>(handle: &'a T) -> Option<Self>
     where
-        THandle: AsRawHandle,
+        T: AsRawHandle,
     {
         let handle = handle.as_raw_handle().cast();
         // The mode is not important, since this call only succeeds for Windows
