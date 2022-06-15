@@ -4,11 +4,17 @@ use std::marker::PhantomData;
 use std::os::windows::io::AsRawHandle;
 use std::ptr;
 
-use winapi::shared::minwindef::DWORD;
-use winapi::shared::minwindef::TRUE;
-use winapi::um::consoleapi::GetConsoleMode;
-use winapi::um::consoleapi::WriteConsoleW;
-use winapi::um::winnt::HANDLE;
+use windows_sys::Win32::Foundation::HANDLE;
+use windows_sys::Win32::System::Console::GetConsoleMode;
+use windows_sys::Win32::System::Console::WriteConsoleW;
+
+// https://github.com/microsoft/windows-rs/issues/881
+#[allow(clippy::upper_case_acronyms)]
+type BOOL = i32;
+#[allow(clippy::upper_case_acronyms)]
+type DWORD = u32;
+
+const TRUE: BOOL = 1;
 
 pub(super) struct Console<'a> {
     handle: HANDLE,
@@ -20,7 +26,7 @@ impl<'a> Console<'a> {
     where
         T: AsRawHandle,
     {
-        let handle = handle.as_raw_handle().cast();
+        let handle = handle.as_raw_handle() as _;
         // The mode is not important, since this call only succeeds for Windows
         // Console. Other streams usually do not require Unicode writes.
         let mut mode = 0;
@@ -34,7 +40,7 @@ impl<'a> Console<'a> {
     #[cfg(test)]
     pub(super) const unsafe fn null() -> Self {
         Self {
-            handle: ptr::null_mut(),
+            handle: 0,
             _marker: PhantomData,
         }
     }
