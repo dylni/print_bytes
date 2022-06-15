@@ -33,6 +33,9 @@ jobs:
       matrix:
         target: [wasm32-wasi, x86_64-unknown-redox]
         version: [1.57.0, stable, beta, nightly]
+        include:
+        - target: x86_64-fortanix-unknown-sgx
+          version: nightly
   test:
     needs: [build]
     runs-on: ${{ matrix.platform }}

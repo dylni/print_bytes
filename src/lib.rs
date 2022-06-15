@@ -67,6 +67,11 @@
 // This is a private option that should not be used.
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
 #![cfg_attr(print_bytes_docs_rs, feature(doc_cfg))]
+// Nightly is also currently required for the SGX platform.
+#![cfg_attr(
+    all(target_vendor = "fortanix", target_env = "sgx"),
+    feature(sgx_platform)
+)]
 #![cfg_attr(feature = "specialization", feature(specialization))]
 #![warn(unsafe_op_in_unsafe_fn)]
 #![warn(unused_results)]
