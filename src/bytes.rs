@@ -116,19 +116,6 @@ impl ToBytes for [u8] {
     }
 }
 
-impl<const N: usize> ToBytes for [u8; N] {
-    #[inline]
-    fn to_bytes(&self) -> ByteStr<'_> {
-        self[..].to_bytes()
-    }
-
-    #[cfg(any(doc, windows))]
-    #[inline]
-    fn to_wide(&self) -> Option<WideStr> {
-        self[..].to_wide()
-    }
-}
-
 macro_rules! defer_methods {
     ( $convert_method:ident ) => {
         #[inline]
@@ -142,6 +129,10 @@ macro_rules! defer_methods {
             self.$convert_method().to_wide()
         }
     };
+}
+
+impl<const N: usize> ToBytes for [u8; N] {
+    defer_methods!(as_slice);
 }
 
 impl<T> ToBytes for Cow<'_, T>
