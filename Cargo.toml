@@ -23,7 +23,7 @@ rustdoc-args = ["--cfg", "print_bytes_docs_rs"]
 windows-sys = { version = "0.36", features = ["Win32_Foundation", "Win32_System_Console"] }
 
 [dev-dependencies]
-os_str_bytes = "6.0"
+os_str_bytes = "6.3"
 
 [features]
 specialization = []

@@ -10,7 +10,7 @@ const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
 #[test]
 fn test_writer() -> io::Result<()> {
     let output = Command::new(env!("CARGO_BIN_EXE_writer"))
-        .arg(OsStr::from_raw_bytes(WTF8_STRING).unwrap())
+        .arg(OsStr::assert_from_raw_bytes(WTF8_STRING))
         .stderr(Stdio::inherit())
         .output()?;
 
