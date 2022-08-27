@@ -34,7 +34,7 @@
 //! ### Nightly Features
 //!
 //! - **specialization** -
-//!   Provides an implementation of [`WriteBytes`] for all types.
+//!   Provides an implementation of [`WriteLossy`] for all types.
 //!
 //! # Examples
 //!
@@ -42,15 +42,15 @@
 //! use std::env;
 //! # use std::io;
 //!
-//! use print_bytes::println_bytes;
+//! use print_bytes::println_lossy;
 //!
 //! print!("exe: ");
-//! println_bytes(&env::current_exe()?);
+//! println_lossy(&env::current_exe()?);
 //! println!();
 //!
 //! println!("args:");
 //! for arg in env::args_os().skip(1) {
-//!     println_bytes(&arg);
+//!     println_lossy(&arg);
 //! }
 //! #
 //! # Ok::<_, io::Error>(())
@@ -91,10 +91,10 @@ use std::io::Write;
 #[cfg(all(feature = "specialization", windows))]
 use std::os::windows::io::AsRawHandle;
 
-macro_rules! impl_write_bytes {
+macro_rules! impl_write_lossy {
     ( $type:ty ) => {
         #[cfg(any(doc, not(feature = "specialization")))]
-        impl $crate::WriteBytes for $type {
+        impl $crate::WriteLossy for $type {
             #[cfg(windows)]
             fn __to_console(&self) -> Option<Console<'_>> {
                 self.to_console()
@@ -123,7 +123,7 @@ mod tests;
 ///
 /// When the "specialization" feature is enabled, this trait is implemented for
 /// all types.
-pub trait WriteBytes {
+pub trait WriteLossy {
     #[cfg(windows)]
     #[doc(hidden)]
     fn __to_console(&self) -> Option<Console<'_>>;
@@ -131,7 +131,7 @@ pub trait WriteBytes {
 
 #[cfg(feature = "specialization")]
 #[cfg_attr(print_bytes_docs_rs, doc(cfg(feature = "specialization")))]
-impl<T> WriteBytes for T
+impl<T> WriteLossy for T
 where
     T: ?Sized,
 {
@@ -143,9 +143,9 @@ where
 
 macro_rules! r#impl {
     ( $generic:ident , $type:ty ) => {
-        impl<$generic> WriteBytes for $type
+        impl<$generic> WriteLossy for $type
         where
-            $generic: ?Sized + WriteBytes,
+            $generic: ?Sized + WriteLossy,
         {
             #[cfg(windows)]
             fn __to_console(&self) -> Option<Console<'_>> {
@@ -159,9 +159,9 @@ r#impl!(T, Box<T>);
 
 macro_rules! r#impl {
     ( $generic:ident , $type:ty ) => {
-        impl<$generic> WriteBytes for $type
+        impl<$generic> WriteLossy for $type
         where
-            $generic: Write + WriteBytes,
+            $generic: Write + WriteLossy,
         {
             #[cfg(windows)]
             fn __to_console(&self) -> Option<Console<'_>> {
@@ -203,7 +203,7 @@ where
 macro_rules! r#impl {
     ( $($type:ty),+ ) => {
         $(
-            impl_write_bytes!($type);
+            impl_write_lossy!($type);
 
             #[cfg(not(feature = "specialization"))]
             impl ToConsole for $type {
@@ -217,7 +217,7 @@ macro_rules! r#impl {
 }
 r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);
 
-impl_write_bytes!(Vec<u8>);
+impl_write_lossy!(Vec<u8>);
 
 #[cfg(not(feature = "specialization"))]
 impl ToConsole for Vec<u8> {
@@ -240,10 +240,10 @@ impl ToConsole for Vec<u8> {
 ///
 /// [module]: self
 #[inline]
-pub fn write_bytes<T, W>(mut writer: W, value: &T) -> io::Result<()>
+pub fn write_lossy<T, W>(mut writer: W, value: &T) -> io::Result<()>
 where
     T: ?Sized + ToBytes,
-    W: Write + WriteBytes,
+    W: Write + WriteLossy,
 {
     #[cfg_attr(not(windows), allow(unused_mut))]
     let mut lossy = false;
@@ -285,7 +285,7 @@ macro_rules! r#impl {
         where
             T: ?Sized + ToBytes,
         {
-            if let Err(error) = write_bytes($writer, value) {
+            if let Err(error) = write_lossy($writer, value) {
                 panic!("failed writing to {}: {}", $label, error);
             }
         }
@@ -316,7 +316,7 @@ r#impl!(
     /// Panics if writing to the stream fails.
     ///
     /// [module]: self
-    print_bytes,
+    print_lossy,
     /// Prints a value to the standard output stream, followed by a newline.
     ///
     /// This function is similar to [`println!`] but does not take a format
@@ -329,7 +329,7 @@ r#impl!(
     /// Panics if writing to the stream fails.
     ///
     /// [module]: self
-    println_bytes,
+    println_lossy,
     "stdout",
 );
 r#impl!(
@@ -346,7 +346,7 @@ r#impl!(
     /// Panics if writing to the stream fails.
     ///
     /// [module]: self
-    eprint_bytes,
+    eprint_lossy,
     /// Prints a value to the standard error stream, followed by a newline.
     ///
     /// This function is similar to [`eprintln!`] but does not take a format
@@ -359,6 +359,6 @@ r#impl!(
     /// Panics if writing to the stream fails.
     ///
     /// [module]: self
-    eprintln_bytes,
+    eprintln_lossy,
     "stderr",
 );

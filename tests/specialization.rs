@@ -1,18 +1,16 @@
-#![cfg(feature = "specialization")]
-
 use std::borrow::Cow;
 use std::ffi::CString;
 use std::ffi::OsStr;
 use std::io;
 use std::path::Path;
 
-use print_bytes::write_bytes;
+use print_bytes::write_lossy;
 
 const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
 
 fn test_write(bytes: &[u8]) -> io::Result<()> {
     let mut writer = Vec::new();
-    write_bytes(&mut writer, bytes)?;
+    write_lossy(&mut writer, bytes)?;
     assert_eq!(bytes, writer);
     Ok(())
 }
@@ -31,9 +29,9 @@ fn test_invalid_write() -> io::Result<()> {
 fn test_multiple_writes() -> io::Result<()> {
     let mut writer = Vec::new();
 
-    write_bytes(&mut writer, &b"Hello, "[..])?;
+    write_lossy(&mut writer, &b"Hello, "[..])?;
     writer.extend_from_slice(b"world");
-    write_bytes(&mut writer, &b"!"[..])?;
+    write_lossy(&mut writer, &b"!"[..])?;
 
     assert_eq!(b"Hello, world!", &*writer);
 
@@ -48,7 +46,7 @@ fn test_implementations() -> io::Result<()> {
     macro_rules! test_one {
         ( $value:expr ) => {{
             let mut writer = Vec::new();
-            write_bytes(&mut writer, $value)?;
+            write_lossy(&mut writer, $value)?;
             assert_eq!(STRING_BYTES, &*writer);
         }};
     }

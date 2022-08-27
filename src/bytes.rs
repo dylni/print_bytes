@@ -57,7 +57,7 @@ impl WideStr {
 /// # Examples
 ///
 /// ```
-/// use print_bytes::println_bytes;
+/// use print_bytes::println_lossy;
 /// use print_bytes::ByteStr;
 /// use print_bytes::ToBytes;
 /// #[cfg(windows)]
@@ -76,7 +76,7 @@ impl WideStr {
 ///     }
 /// }
 ///
-/// println_bytes(&ByteSlice(b"Hello, world!"));
+/// println_lossy(&ByteSlice(b"Hello, world!"));
 /// ```
 ///
 /// [`Display`]: ::std::fmt::Display

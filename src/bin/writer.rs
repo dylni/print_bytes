@@ -1,7 +1,7 @@
 fn main() {
     use std::env;
 
-    use print_bytes::print_bytes;
+    use print_bytes::print_lossy;
 
-    print_bytes(&env::args_os().nth(1).expect("missing argument"));
+    print_lossy(&env::args_os().nth(1).expect("missing argument"));
 }

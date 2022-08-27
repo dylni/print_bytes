@@ -32,7 +32,7 @@ impl Write for Writer {
     }
 }
 
-impl_write_bytes!(Writer);
+impl_write_lossy!(Writer);
 
 impl ToConsole for Writer {
     fn to_console(&self) -> Option<Console<'_>> {
@@ -56,13 +56,13 @@ fn assert_invalid_string(writer: &Writer, lossy: bool) {
 }
 
 #[test]
-fn test_write_bytes() -> io::Result<()> {
+fn test_write_lossy() -> io::Result<()> {
     let mut writer = Writer::new(false);
-    super::write_bytes(&mut writer, INVALID_STRING)?;
+    super::write_lossy(&mut writer, INVALID_STRING)?;
     assert_invalid_string(&writer, false);
 
     writer = Writer::new(true);
-    super::write_bytes(&mut writer, INVALID_STRING)?;
+    super::write_lossy(&mut writer, INVALID_STRING)?;
     assert_invalid_string(&writer, true);
 
     Ok(())
