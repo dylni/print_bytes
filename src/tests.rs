@@ -4,7 +4,7 @@ use std::io;
 use std::io::Write;
 
 use super::Console;
-use super::WriteBytes;
+use super::ToConsole;
 
 const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80";
 
@@ -32,7 +32,9 @@ impl Write for Writer {
     }
 }
 
-impl WriteBytes for Writer {
+impl_write_bytes!(Writer);
+
+impl ToConsole for Writer {
     fn to_console(&self) -> Option<Console<'_>> {
         // SAFETY: Since no platform strings are being written, no test should
         // ever write to this console.
@@ -53,28 +55,15 @@ fn assert_invalid_string(writer: &Writer, lossy: bool) {
     }
 }
 
-fn test<F>(mut write_fn: F) -> io::Result<()>
-where
-    F: FnMut(&mut Writer, &[u8]) -> io::Result<()>,
-{
+#[test]
+fn test_write_bytes() -> io::Result<()> {
     let mut writer = Writer::new(false);
-    write_fn(&mut writer, INVALID_STRING)?;
+    super::write_bytes(&mut writer, INVALID_STRING)?;
     assert_invalid_string(&writer, false);
 
     writer = Writer::new(true);
-    write_fn(&mut writer, INVALID_STRING)?;
+    super::write_bytes(&mut writer, INVALID_STRING)?;
     assert_invalid_string(&writer, true);
 
     Ok(())
-}
-
-#[test]
-fn test_write() -> io::Result<()> {
-    test(WriteBytes::write_bytes)
-}
-
-#[cfg(feature = "specialization")]
-#[test]
-fn test_write_bytes() -> io::Result<()> {
-    test(|writer, bytes| super::write_bytes(writer, bytes))
 }

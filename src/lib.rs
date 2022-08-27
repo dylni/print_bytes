@@ -34,7 +34,7 @@
 //! ### Nightly Features
 //!
 //! - **specialization** -
-//!   Provides [`write_bytes`].
+//!   Provides an implementation of [`WriteBytes`] for all types.
 //!
 //! # Examples
 //!
@@ -77,11 +77,31 @@
 #![warn(unused_results)]
 
 use std::io;
+use std::io::BufWriter;
+use std::io::LineWriter;
+#[cfg(any(doc, not(feature = "specialization")))]
 use std::io::Stderr;
+#[cfg(any(doc, not(feature = "specialization")))]
 use std::io::StderrLock;
+#[cfg(any(doc, not(feature = "specialization")))]
 use std::io::Stdout;
+#[cfg(any(doc, not(feature = "specialization")))]
 use std::io::StdoutLock;
 use std::io::Write;
+#[cfg(all(feature = "specialization", windows))]
+use std::os::windows::io::AsRawHandle;
+
+macro_rules! impl_write_bytes {
+    ( $type:ty ) => {
+        #[cfg(any(doc, not(feature = "specialization")))]
+        impl $crate::WriteBytes for $type {
+            #[cfg(windows)]
+            fn __to_console(&self) -> Option<Console<'_>> {
+                self.to_console()
+            }
+        }
+    };
+}
 
 mod bytes;
 pub use bytes::ByteStr;
@@ -98,47 +118,70 @@ use console::Console;
 #[cfg(test)]
 mod tests;
 
-trait WriteBytes: Write {
+/// A bound for [`write_lossy`] that allows it to be used for some types
+/// without specialization.
+///
+/// When the "specialization" feature is enabled, this trait is implemented for
+/// all types.
+pub trait WriteBytes {
     #[cfg(windows)]
-    fn to_console(&self) -> Option<Console<'_>>;
-
-    #[inline]
-    fn write_bytes<T>(&mut self, value: &T) -> io::Result<()>
-    where
-        T: ?Sized + ToBytes,
-    {
-        #[cfg_attr(not(windows), allow(unused_mut))]
-        let mut lossy = false;
-        #[cfg(windows)]
-        if let Some(mut console) = self.to_console() {
-            if let Some(string) = value.to_wide() {
-                return console.write_wide_all(&string.0);
-            }
-            lossy = true;
-        }
-
-        let buffer;
-        let string = value.to_bytes();
-        let string = match &string.0 {
-            ByteStrInner::Bytes(string) => {
-                if lossy {
-                    buffer = String::from_utf8_lossy(string);
-                    buffer.as_bytes()
-                } else {
-                    string
-                }
-            }
-            #[cfg(windows)]
-            ByteStrInner::Str(string) => string.as_bytes(),
-        };
-        self.write_all(string)
-    }
+    #[doc(hidden)]
+    fn __to_console(&self) -> Option<Console<'_>>;
 }
 
 #[cfg(feature = "specialization")]
+#[cfg_attr(print_bytes_docs_rs, doc(cfg(feature = "specialization")))]
 impl<T> WriteBytes for T
 where
-    T: ?Sized + Write,
+    T: ?Sized,
+{
+    #[cfg(windows)]
+    default fn __to_console(&self) -> Option<Console<'_>> {
+        self.to_console()
+    }
+}
+
+macro_rules! r#impl {
+    ( $generic:ident , $type:ty ) => {
+        impl<$generic> WriteBytes for $type
+        where
+            $generic: ?Sized + WriteBytes,
+        {
+            #[cfg(windows)]
+            fn __to_console(&self) -> Option<Console<'_>> {
+                (**self).__to_console()
+            }
+        }
+    };
+}
+r#impl!(T, &mut T);
+r#impl!(T, Box<T>);
+
+macro_rules! r#impl {
+    ( $generic:ident , $type:ty ) => {
+        impl<$generic> WriteBytes for $type
+        where
+            $generic: Write + WriteBytes,
+        {
+            #[cfg(windows)]
+            fn __to_console(&self) -> Option<Console<'_>> {
+                self.get_ref().__to_console()
+            }
+        }
+    };
+}
+r#impl!(T, BufWriter<T>);
+r#impl!(T, LineWriter<T>);
+
+trait ToConsole {
+    #[cfg(windows)]
+    fn to_console(&self) -> Option<Console<'_>>;
+}
+
+#[cfg(feature = "specialization")]
+impl<T> ToConsole for T
+where
+    T: ?Sized,
 {
     #[cfg(windows)]
     default fn to_console(&self) -> Option<Console<'_>> {
@@ -147,21 +190,23 @@ where
 }
 
 #[cfg(feature = "specialization")]
-impl<'a, T> WriteBytes for &'a mut T
+#[cfg(windows)]
+impl<T> ToConsole for T
 where
-    T: ?Sized + WriteBytes,
-    &'a mut T: Write,
+    T: AsRawHandle,
 {
-    #[cfg(windows)]
-    default fn to_console(&self) -> Option<Console<'_>> {
-        (**self).to_console()
+    fn to_console(&self) -> Option<Console<'_>> {
+        Console::from_handle(self)
     }
 }
 
 macro_rules! r#impl {
     ( $($type:ty),+ ) => {
         $(
-            impl WriteBytes for $type {
+            impl_write_bytes!($type);
+
+            #[cfg(not(feature = "specialization"))]
+            impl ToConsole for $type {
                 #[cfg(windows)]
                 fn to_console(&self) -> Option<Console<'_>> {
                     Console::from_handle(self)
@@ -171,6 +216,16 @@ macro_rules! r#impl {
     };
 }
 r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);
+
+impl_write_bytes!(Vec<u8>);
+
+#[cfg(not(feature = "specialization"))]
+impl ToConsole for Vec<u8> {
+    #[cfg(windows)]
+    fn to_console(&self) -> Option<Console<'_>> {
+        None
+    }
+}
 
 /// Writes a value to a "writer".
 ///
@@ -184,15 +239,37 @@ r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);
 /// Returns an error if writing fails.
 ///
 /// [module]: self
-#[cfg_attr(print_bytes_docs_rs, doc(cfg(feature = "specialization")))]
-#[cfg(feature = "specialization")]
 #[inline]
 pub fn write_bytes<T, W>(mut writer: W, value: &T) -> io::Result<()>
 where
     T: ?Sized + ToBytes,
-    W: Write,
+    W: Write + WriteBytes,
 {
-    writer.write_bytes(value)
+    #[cfg_attr(not(windows), allow(unused_mut))]
+    let mut lossy = false;
+    #[cfg(windows)]
+    if let Some(mut console) = writer.__to_console() {
+        if let Some(string) = value.to_wide() {
+            return console.write_wide_all(&string.0);
+        }
+        lossy = true;
+    }
+
+    let buffer;
+    let string = value.to_bytes();
+    let string = match &string.0 {
+        ByteStrInner::Bytes(string) => {
+            if lossy {
+                buffer = String::from_utf8_lossy(string);
+                buffer.as_bytes()
+            } else {
+                string
+            }
+        }
+        #[cfg(windows)]
+        ByteStrInner::Str(string) => string.as_bytes(),
+    };
+    writer.write_all(string)
 }
 
 macro_rules! r#impl {
@@ -208,7 +285,7 @@ macro_rules! r#impl {
         where
             T: ?Sized + ToBytes,
         {
-            if let Err(error) = $writer.write_bytes(value) {
+            if let Err(error) = write_bytes($writer, value) {
                 panic!("failed writing to {}: {}", $label, error);
             }
         }

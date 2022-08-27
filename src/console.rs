@@ -11,7 +11,7 @@ use windows_sys::Win32::System::Console::WriteConsoleW;
 
 const TRUE: BOOL = 1;
 
-pub(super) struct Console<'a> {
+pub struct Console<'a> {
     handle: HANDLE,
     _marker: PhantomData<&'a ()>,
 }
