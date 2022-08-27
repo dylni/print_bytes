@@ -4,15 +4,10 @@ use std::marker::PhantomData;
 use std::os::windows::io::AsRawHandle;
 use std::ptr;
 
+use windows_sys::Win32::Foundation::BOOL;
 use windows_sys::Win32::Foundation::HANDLE;
 use windows_sys::Win32::System::Console::GetConsoleMode;
 use windows_sys::Win32::System::Console::WriteConsoleW;
-
-// https://github.com/microsoft/windows-rs/issues/881
-#[allow(clippy::upper_case_acronyms)]
-type BOOL = i32;
-#[allow(clippy::upper_case_acronyms)]
-type DWORD = u32;
 
 const TRUE: BOOL = 1;
 
@@ -26,7 +21,12 @@ impl<'a> Console<'a> {
     where
         T: AsRawHandle,
     {
-        let handle = handle.as_raw_handle() as _;
+        let handle = handle.as_raw_handle();
+        if handle.is_null() {
+            return None;
+        }
+        let handle = handle as _;
+
         // The mode is not important, since this call only succeeds for Windows
         // Console. Other streams usually do not require Unicode writes.
         let mut mode = 0;
@@ -46,7 +46,7 @@ impl<'a> Console<'a> {
     }
 
     fn write_wide(&mut self, string: &[u16]) -> io::Result<usize> {
-        let length = string.len().try_into().unwrap_or(DWORD::MAX);
+        let length = string.len().try_into().unwrap_or(u32::MAX);
         let mut written_length = 0;
         let result = unsafe {
             WriteConsoleW(
