@@ -22,7 +22,7 @@ Add the following lines to your "Cargo.toml" file:
 
 ```toml
 [dependencies]
-print_bytes = "0.6"
+print_bytes = "0.7"
 ```
 
 See the [documentation] for available functionality and examples.
@@ -38,7 +38,7 @@ crate's minor version:
 
 ```toml
 [dependencies]
-print_bytes = "~0.6"
+print_bytes = "~0.7"
 ```
 
 ## License
