@@ -87,6 +87,8 @@ pub use print_bytes2::print_lossy as print_bytes;
 pub use print_bytes2::println_lossy as println_bytes;
 pub use print_bytes2::ByteStr;
 pub use print_bytes2::ToBytes;
+#[cfg(windows)]
+pub use print_bytes2::WideStr;
 
 /// Writes a value to a "writer".
 ///
