@@ -19,7 +19,7 @@ pub struct Console<'a> {
 impl<'a> Console<'a> {
     pub(super) fn from_handle<T>(handle: &'a T) -> Option<Self>
     where
-        T: AsRawHandle,
+        T: AsRawHandle + ?Sized,
     {
         let handle = handle.as_raw_handle();
         if handle.is_null() {

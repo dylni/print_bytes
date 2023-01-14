@@ -4,8 +4,8 @@
 //! Usually, paths are printed by calling [`Path::display`] or
 //! [`Path::to_string_lossy`] beforehand. However, both of these methods are
 //! always lossy; they misrepresent some valid paths in output. The same is
-//! true when using [`String::from_utf8_lossy`] to print any other UTF-8–like
-//! byte sequence.
+//! true when using [`String::from_utf8_lossy`] to print any other
+//! UTF-8&ndash;like byte sequence.
 //!
 //! Instead, this crate only performs a lossy conversion when the output device
 //! is known to require Unicode, to make output as accurate as possible. When
@@ -73,7 +73,6 @@
     feature(sgx_platform)
 )]
 #![cfg_attr(feature = "specialization", feature(specialization))]
-#![warn(unsafe_op_in_unsafe_fn)]
 #![warn(unused_results)]
 
 use std::io;
@@ -189,11 +188,10 @@ where
     }
 }
 
-#[cfg(feature = "specialization")]
-#[cfg(windows)]
+#[cfg(all(feature = "specialization", windows))]
 impl<T> ToConsole for T
 where
-    T: AsRawHandle,
+    T: AsRawHandle + ?Sized,
 {
     fn to_console(&self) -> Option<Console<'_>> {
         Console::from_handle(self)
@@ -236,7 +234,24 @@ impl ToConsole for Vec<u8> {
 ///
 /// # Errors
 ///
-/// Returns an error if writing fails.
+/// Returns an error if writing to the writer fails.
+///
+/// # Examples
+///
+/// ```
+/// use std::env;
+/// use std::ffi::OsStr;
+///
+/// use print_bytes::write_lossy;
+///
+/// let string = "foobar";
+/// let os_string = OsStr::new(string);
+///
+/// let mut lossy_string = Vec::new();
+/// write_lossy(&mut lossy_string, os_string)
+///     .expect("failed writing to vector");
+/// assert_eq!(string.as_bytes(), lossy_string);
+/// ```
 ///
 /// [module]: self
 #[inline]
@@ -272,6 +287,13 @@ where
     writer.write_all(string)
 }
 
+macro_rules! print_lossy {
+    ( $writer:expr , $value:expr , $label:literal ) => {
+        write_lossy($writer, $value)
+            .unwrap_or_else(|x| panic!("failed writing to {}: {}", $label, x))
+    };
+}
+
 macro_rules! r#impl {
     (
         $writer:expr ,
@@ -285,9 +307,7 @@ macro_rules! r#impl {
         where
             T: ?Sized + ToBytes,
         {
-            if let Err(error) = write_lossy($writer, value) {
-                panic!("failed writing to {}: {}", $label, error);
-            }
+            print_lossy!($writer, value, $label);
         }
 
         #[inline]
@@ -296,42 +316,13 @@ macro_rules! r#impl {
         where
             T: ?Sized + ToBytes,
         {
-            let _ = $writer.lock();
-            $print_fn(value);
-            $print_fn(&b"\n"[..]);
+            let writer = $writer;
+            let mut writer = writer.lock();
+            print_lossy!(&mut writer, value, $label);
+            print_lossy!(writer, b"\n", $label);
         }
     };
 }
-r#impl!(
-    io::stdout(),
-    /// Prints a value to the standard output stream.
-    ///
-    /// This function is similar to [`print!`] but does not take a format
-    /// parameter.
-    ///
-    /// For more information, see [the module-level documentation][module].
-    ///
-    /// # Panics
-    ///
-    /// Panics if writing to the stream fails.
-    ///
-    /// [module]: self
-    print_lossy,
-    /// Prints a value to the standard output stream, followed by a newline.
-    ///
-    /// This function is similar to [`println!`] but does not take a format
-    /// parameter.
-    ///
-    /// For more information, see [the module-level documentation][module].
-    ///
-    /// # Panics
-    ///
-    /// Panics if writing to the stream fails.
-    ///
-    /// [module]: self
-    println_lossy,
-    "stdout",
-);
 r#impl!(
     io::stderr(),
     /// Prints a value to the standard error stream.
@@ -344,6 +335,19 @@ r#impl!(
     /// # Panics
     ///
     /// Panics if writing to the stream fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// # use std::io;
+    ///
+    /// use print_bytes::eprint_lossy;
+    ///
+    /// eprint_lossy(&env::current_exe()?);
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
     ///
     /// [module]: self
     eprint_lossy,
@@ -358,7 +362,76 @@ r#impl!(
     ///
     /// Panics if writing to the stream fails.
     ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// # use std::io;
+    ///
+    /// use print_bytes::eprintln_lossy;
+    ///
+    /// eprintln_lossy(&env::current_exe()?);
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
+    ///
     /// [module]: self
     eprintln_lossy,
     "stderr",
+);
+r#impl!(
+    io::stdout(),
+    /// Prints a value to the standard output stream.
+    ///
+    /// This function is similar to [`print!`] but does not take a format
+    /// parameter.
+    ///
+    /// For more information, see [the module-level documentation][module].
+    ///
+    /// # Panics
+    ///
+    /// Panics if writing to the stream fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// # use std::io;
+    ///
+    /// use print_bytes::print_lossy;
+    ///
+    /// print_lossy(&env::current_exe()?);
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
+    ///
+    /// [module]: self
+    print_lossy,
+    /// Prints a value to the standard output stream, followed by a newline.
+    ///
+    /// This function is similar to [`println!`] but does not take a format
+    /// parameter.
+    ///
+    /// For more information, see [the module-level documentation][module].
+    ///
+    /// # Panics
+    ///
+    /// Panics if writing to the stream fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// # use std::io;
+    ///
+    /// use print_bytes::println_lossy;
+    ///
+    /// println_lossy(&env::current_exe()?);
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
+    ///
+    /// [module]: self
+    println_lossy,
+    "stdout",
 );
