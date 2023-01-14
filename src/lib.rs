@@ -76,31 +76,7 @@
 #![warn(unused_results)]
 
 use std::io;
-use std::io::BufWriter;
-use std::io::LineWriter;
-#[cfg(any(doc, not(feature = "specialization")))]
-use std::io::Stderr;
-#[cfg(any(doc, not(feature = "specialization")))]
-use std::io::StderrLock;
-#[cfg(any(doc, not(feature = "specialization")))]
-use std::io::Stdout;
-#[cfg(any(doc, not(feature = "specialization")))]
-use std::io::StdoutLock;
 use std::io::Write;
-#[cfg(all(feature = "specialization", windows))]
-use std::os::windows::io::AsRawHandle;
-
-macro_rules! impl_write_lossy {
-    ( $type:ty ) => {
-        #[cfg(any(doc, not(feature = "specialization")))]
-        impl $crate::WriteLossy for $type {
-            #[cfg(windows)]
-            fn __to_console(&self) -> Option<Console<'_>> {
-                self.to_console()
-            }
-        }
-    };
-}
 
 mod bytes;
 pub use bytes::ByteStr;
@@ -111,119 +87,13 @@ pub use bytes::WideStr;
 
 #[cfg(windows)]
 mod console;
-#[cfg(windows)]
-use console::Console;
+
+#[cfg_attr(test, macro_use)]
+mod writer;
+pub use writer::WriteLossy;
 
 #[cfg(test)]
 mod tests;
-
-/// A bound for [`write_lossy`] that allows it to be used for some types
-/// without specialization.
-///
-/// When the "specialization" feature is enabled, this trait is implemented for
-/// all types.
-pub trait WriteLossy {
-    #[cfg(windows)]
-    #[doc(hidden)]
-    fn __to_console(&self) -> Option<Console<'_>>;
-}
-
-#[cfg(feature = "specialization")]
-#[cfg_attr(print_bytes_docs_rs, doc(cfg(feature = "specialization")))]
-impl<T> WriteLossy for T
-where
-    T: ?Sized,
-{
-    #[cfg(windows)]
-    default fn __to_console(&self) -> Option<Console<'_>> {
-        self.to_console()
-    }
-}
-
-macro_rules! r#impl {
-    ( $generic:ident , $type:ty ) => {
-        impl<$generic> WriteLossy for $type
-        where
-            $generic: ?Sized + WriteLossy,
-        {
-            #[cfg(windows)]
-            fn __to_console(&self) -> Option<Console<'_>> {
-                (**self).__to_console()
-            }
-        }
-    };
-}
-r#impl!(T, &mut T);
-r#impl!(T, Box<T>);
-
-macro_rules! r#impl {
-    ( $generic:ident , $type:ty ) => {
-        impl<$generic> WriteLossy for $type
-        where
-            $generic: Write + WriteLossy,
-        {
-            #[cfg(windows)]
-            fn __to_console(&self) -> Option<Console<'_>> {
-                self.get_ref().__to_console()
-            }
-        }
-    };
-}
-r#impl!(T, BufWriter<T>);
-r#impl!(T, LineWriter<T>);
-
-trait ToConsole {
-    #[cfg(windows)]
-    fn to_console(&self) -> Option<Console<'_>>;
-}
-
-#[cfg(feature = "specialization")]
-impl<T> ToConsole for T
-where
-    T: ?Sized,
-{
-    #[cfg(windows)]
-    default fn to_console(&self) -> Option<Console<'_>> {
-        None
-    }
-}
-
-#[cfg(all(feature = "specialization", windows))]
-impl<T> ToConsole for T
-where
-    T: AsRawHandle + ?Sized,
-{
-    fn to_console(&self) -> Option<Console<'_>> {
-        Console::from_handle(self)
-    }
-}
-
-macro_rules! r#impl {
-    ( $($type:ty),+ ) => {
-        $(
-            impl_write_lossy!($type);
-
-            #[cfg(not(feature = "specialization"))]
-            impl ToConsole for $type {
-                #[cfg(windows)]
-                fn to_console(&self) -> Option<Console<'_>> {
-                    Console::from_handle(self)
-                }
-            }
-        )+
-    };
-}
-r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);
-
-impl_write_lossy!(Vec<u8>);
-
-#[cfg(not(feature = "specialization"))]
-impl ToConsole for Vec<u8> {
-    #[cfg(windows)]
-    fn to_console(&self) -> Option<Console<'_>> {
-        None
-    }
-}
 
 /// Writes a value to a "writer".
 ///
@@ -287,9 +157,9 @@ where
     writer.write_all(string)
 }
 
-macro_rules! print_lossy {
-    ( $writer:expr , $value:expr , $label:literal ) => {
-        write_lossy($writer, $value)
+macro_rules! expect_print {
+    ( $label:literal , $result:expr ) => {
+        $result
             .unwrap_or_else(|x| panic!("failed writing to {}: {}", $label, x))
     };
 }
@@ -307,7 +177,7 @@ macro_rules! r#impl {
         where
             T: ?Sized + ToBytes,
         {
-            print_lossy!($writer, value, $label);
+            expect_print!($label, write_lossy($writer, value));
         }
 
         #[inline]
@@ -318,8 +188,8 @@ macro_rules! r#impl {
         {
             let writer = $writer;
             let mut writer = writer.lock();
-            print_lossy!(&mut writer, value, $label);
-            print_lossy!(writer, b"\n", $label);
+            expect_print!($label, write_lossy(&mut writer, value));
+            expect_print!($label, writer.write_all(b"\n"));
         }
     };
 }

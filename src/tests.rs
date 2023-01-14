@@ -3,8 +3,7 @@
 use std::io;
 use std::io::Write;
 
-use super::Console;
-use super::ToConsole;
+use super::console::Console;
 
 const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80";
 
@@ -23,23 +22,20 @@ impl Writer {
 }
 
 impl Write for Writer {
-    fn flush(&mut self) -> io::Result<()> {
-        self.buffer.flush()
-    }
-
     fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
         self.buffer.write(bytes)
     }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.buffer.flush()
+    }
 }
 
-impl_write_lossy!(Writer);
-
-impl ToConsole for Writer {
-    fn to_console(&self) -> Option<Console<'_>> {
-        // SAFETY: Since no platform strings are being written, no test should
-        // ever write to this console.
-        self.is_console.then(|| unsafe { Console::null() })
-    }
+impl_to_console! {
+    Writer,
+    // SAFETY: Since no platform strings are being written, no test should ever
+    // write to this console.
+    |x| x.is_console.then(|| unsafe { Console::null() }),
 }
 
 fn assert_invalid_string(writer: &Writer, lossy: bool) {
