@@ -10,7 +10,7 @@ use std::io::Stdout;
 use std::io::StdoutLock;
 use std::io::Write;
 #[cfg(all(feature = "specialization", windows))]
-use std::os::windows::io::AsRawHandle;
+use std::os::windows::io::AsHandle;
 
 #[cfg(windows)]
 use super::console::Console;
@@ -34,7 +34,7 @@ where
 #[cfg(all(feature = "specialization", windows))]
 impl<T> ToConsole for T
 where
-    T: AsRawHandle + ?Sized + Write,
+    T: AsHandle + ?Sized + Write,
 {
     fn to_console(&self) -> Option<Console<'_>> {
         Console::from_handle(self)

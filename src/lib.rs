@@ -186,8 +186,7 @@ macro_rules! r#impl {
         where
             T: ?Sized + ToBytes,
         {
-            let writer = $writer;
-            let mut writer = writer.lock();
+            let mut writer = $writer.lock();
             expect_print!($label, write_lossy(&mut writer, value));
             expect_print!($label, writer.write_all(b"\n"));
         }
