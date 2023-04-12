@@ -22,8 +22,8 @@ impl Writer {
 }
 
 impl Write for Writer {
-    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
-        self.buffer.write(bytes)
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.buffer.write(buf)
     }
 
     fn flush(&mut self) -> io::Result<()> {
