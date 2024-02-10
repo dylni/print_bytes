@@ -15,17 +15,16 @@ use std::os::windows::io::AsHandle;
 #[cfg(windows)]
 use super::console::Console;
 
+#[cfg(windows)]
 pub(super) trait ToConsole {
-    #[cfg(windows)]
     fn to_console(&self) -> Option<Console<'_>>;
 }
 
-#[cfg(feature = "specialization")]
+#[cfg(all(feature = "specialization", windows))]
 impl<T> ToConsole for T
 where
     T: ?Sized,
 {
-    #[cfg(windows)]
     default fn to_console(&self) -> Option<Console<'_>> {
         None
     }
@@ -108,9 +107,9 @@ macro_rules! impl_to_console {
             }
         }
 
+        #[cfg(windows)]
         $(#[$attr])*
         impl $crate::writer::ToConsole for $type {
-            #[cfg(windows)]
             fn to_console<'a>(&'a self) -> Option<Console<'a>> {
                 let to_console_fn: fn(&'a Self) -> _ = $to_console_fn;
                 to_console_fn(self)
