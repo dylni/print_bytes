@@ -7,7 +7,6 @@ use std::ptr;
 
 use windows_sys::Win32::Foundation::BOOL;
 use windows_sys::Win32::Foundation::HANDLE;
-use windows_sys::Win32::Foundation::INVALID_HANDLE_VALUE;
 use windows_sys::Win32::System::Console::GetConsoleMode;
 use windows_sys::Win32::System::Console::WriteConsoleW;
 
@@ -34,15 +33,10 @@ impl<'a> Console<'a> {
         T: AsHandle + ?Sized,
     {
         let handle = handle.as_handle();
-        let raw_handle = raw_handle(handle);
-        if matches!(raw_handle, 0 | INVALID_HANDLE_VALUE) {
-            return None;
-        }
-
         // The mode is not important, since this call only succeeds for Windows
         // Console. Other streams usually do not require Unicode writes.
         let mut mode = 0;
-        check_syscall(unsafe { GetConsoleMode(raw_handle, &mut mode) })
+        check_syscall(unsafe { GetConsoleMode(raw_handle(handle), &mut mode) })
             .ok()
             .map(|()| Self(handle))
     }

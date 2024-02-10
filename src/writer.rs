@@ -120,10 +120,12 @@ macro_rules! impl_to_console {
 
 macro_rules! r#impl {
     ( $($type:ty),+ ) => {
-        $(impl_to_console! {
+    $(
+        impl_to_console! {
             #[cfg(not(feature = "specialization"))]
             $type, Console::from_handle,
-        })+
+        }
+    )+
     };
 }
 r#impl!(Stderr, StderrLock<'_>, Stdout, StdoutLock<'_>);

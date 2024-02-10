@@ -19,8 +19,8 @@
 //! [`OsStr`] and related structs may be printed lossily on Windows. Paths are
 //! not represented using bytes on that platform, so it may be confusing to
 //! display them in that manner. Plus, the encoding most often used to account
-//! for the difference is [not permitted to be written to files][wtf-8
-//! audience], so it would not make sense for this crate to use it.
+//! for the difference is [not permitted to be written to
+//! files][wtf8_audience], so it would not make sense for this crate to use it.
 //!
 //! Windows Console can display these paths, so this crate will output them
 //! losslessly when writing to that terminal.
@@ -28,10 +28,11 @@
 //! # Features
 //!
 //! These features are optional and can be enabled or disabled in a
-//! "Cargo.toml" file. Nightly features are unstable, since they rely on
-//! unstable Rust features.
+//! "Cargo.toml" file.
 //!
 //! ### Nightly Features
+//!
+//! These features are unstable, since they rely on unstable Rust features.
 //!
 //! - **specialization** -
 //!   Provides an implementation of [`WriteLossy`] for all types.
@@ -60,7 +61,7 @@
 //! [`Path::display`]: ::std::path::Path::display
 //! [`Path::to_string_lossy`]: ::std::path::Path::to_string_lossy
 //! [`REPLACEMENT_CHARACTER`]: ::std::char::REPLACEMENT_CHARACTER
-//! [wtf-8 audience]: https://simonsapin.github.io/wtf-8/#intended-audience
+//! [wtf8_audience]: https://simonsapin.github.io/wtf-8/#intended-audience
 
 #![cfg_attr(feature = "specialization", allow(incomplete_features))]
 // Only require a nightly compiler when building documentation for docs.rs.
@@ -169,7 +170,7 @@ macro_rules! r#impl {
         $writer:expr ,
         $(#[ $print_fn_attr:meta ])* $print_fn:ident ,
         $(#[ $println_fn_attr:meta ])* $println_fn:ident ,
-        $label:literal $(,)?
+        $label:literal ,
     ) => {
         #[inline]
         $(#[$print_fn_attr])*

@@ -166,6 +166,8 @@ defer_impl!(Vec<u8>, as_slice);
 mod os_str {
     use std::ffi::OsStr;
     use std::ffi::OsString;
+    #[cfg(windows)]
+    use std::os::windows::ffi::OsStrExt;
     use std::path::Path;
     use std::path::PathBuf;
 
@@ -210,9 +212,6 @@ mod os_str {
         #[cfg(any(doc, windows))]
         #[inline]
         fn to_wide(&self) -> Option<WideStr> {
-            #[cfg(windows)]
-            use std::os::windows::ffi::OsStrExt;
-
             Some(WideStr(self.encode_wide().collect()))
         }
     }

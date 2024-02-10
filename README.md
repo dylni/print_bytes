@@ -14,7 +14,7 @@ necessary, any character sequence that cannot be represented will be replaced
 with [`REPLACEMENT_CHARACTER`]. That convention is shared with the standard
 library, which uses the same character for its lossy conversion functions.
 
-[![GitHub Build Status](https://github.com/dylni/print_bytes/workflows/build/badge.svg?branch=master)](https://github.com/dylni/print_bytes/actions?query=branch%3Amaster)
+[![GitHub Build Status](https://github.com/dylni/print_bytes/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/dylni/print_bytes/actions/workflows/build.yml?query=branch%3Amaster)
 
 ## Usage
 
