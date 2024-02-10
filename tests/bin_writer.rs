@@ -1,31 +1,45 @@
+#![cfg(feature = "os_str_bytes")]
+
 use std::char::REPLACEMENT_CHARACTER;
-use std::ffi::OsStr;
 use std::io;
 use std::process::Command;
 use std::process::Stdio;
 
-use os_str_bytes::OsStrBytes;
-
-const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
-
 #[test]
 fn test_wtf8() -> io::Result<()> {
+    #[cfg(windows)]
+    let buffer;
+    let string = {
+        #[cfg(unix)]
+        {
+            use std::ffi::OsStr;
+            use std::os::unix::ffi::OsStrExt;
+
+            OsStr::from_bytes(b"\x66\x6F\x80\x6F")
+        }
+        #[cfg(windows)]
+        {
+            use std::ffi::OsString;
+            use std::os::windows::ffi::OsStringExt;
+
+            buffer = OsString::from_wide(&[0x66, 0x6F, 0xD800, 0x6F]);
+            &buffer
+        }
+    };
+    assert_eq!(None, string.to_str());
+
     let output = Command::new(env!("CARGO_BIN_EXE_writer"))
-        .arg(OsStr::assert_from_raw_bytes(WTF8_STRING))
+        .arg(string)
         .stderr(Stdio::inherit())
         .output()?;
 
     if cfg!(windows) {
-        let mut replacement = [0; 4];
-        let replacement = REPLACEMENT_CHARACTER.encode_utf8(&mut replacement);
-
-        let mut lossy_string = WTF8_STRING.to_owned();
-        let _ = lossy_string.splice(3..6, replacement.bytes());
-        assert_ne!(WTF8_STRING, lossy_string);
-
-        assert_eq!(lossy_string, output.stdout);
+        assert_eq!(
+            format!("\x66\x6F{}\x6F", REPLACEMENT_CHARACTER).as_bytes(),
+            output.stdout,
+        );
     } else {
-        assert_eq!(WTF8_STRING, &*output.stdout);
+        assert_eq!(&b"\x66\x6F\x80\x6F"[..], output.stdout);
     }
 
     assert!(output.status.success());

@@ -30,6 +30,15 @@
 //! These features are optional and can be enabled or disabled in a
 //! "Cargo.toml" file.
 //!
+//! ### Optional Features
+//!
+//! - **os\_str\_bytes** -
+//!   Provides implementations of [`ToBytes`] for:
+//!   - [`OsStr`]
+//!   - [`OsString`]
+//!   - [`Path`]
+//!   - [`PathBuf`]
+//!
 //! ### Nightly Features
 //!
 //! These features are unstable, since they rely on unstable Rust features.
@@ -46,11 +55,13 @@
 //! use print_bytes::println_lossy;
 //!
 //! print!("exe: ");
+//! # #[cfg(feature = "os_str_bytes")]
 //! println_lossy(&env::current_exe()?);
 //! println!();
 //!
 //! println!("args:");
 //! for arg in env::args_os().skip(1) {
+//! #   #[cfg(feature = "os_str_bytes")]
 //!     println_lossy(&arg);
 //! }
 //! #
@@ -58,9 +69,12 @@
 //! ```
 //!
 //! [`OsStr`]: ::std::ffi::OsStr
+//! [`OsString`]: ::std::ffi::OsString
+//! [`Path`]: ::std::path::Path
 //! [`Path::display`]: ::std::path::Path::display
 //! [`Path::to_string_lossy`]: ::std::path::Path::to_string_lossy
-//! [`REPLACEMENT_CHARACTER`]: ::std::char::REPLACEMENT_CHARACTER
+//! [`PathBuf`]: ::std::path::PathBuf
+//! [`REPLACEMENT_CHARACTER`]: char::REPLACEMENT_CHARACTER
 //! [wtf8_audience]: https://simonsapin.github.io/wtf-8/#intended-audience
 
 #![cfg_attr(feature = "specialization", allow(incomplete_features))]
@@ -68,11 +82,6 @@
 // This is a private option that should not be used.
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
 #![cfg_attr(print_bytes_docs_rs, feature(doc_cfg))]
-// Nightly is also currently required for the SGX platform.
-#![cfg_attr(
-    all(target_vendor = "fortanix", target_env = "sgx"),
-    feature(sgx_platform)
-)]
 #![cfg_attr(feature = "specialization", feature(specialization))]
 #![warn(unused_results)]
 
@@ -118,10 +127,13 @@ mod tests;
 /// let string = "foobar";
 /// let os_string = OsStr::new(string);
 ///
+/// # #[cfg(feature = "os_str_bytes")]
+/// # {
 /// let mut lossy_string = Vec::new();
 /// write_lossy(&mut lossy_string, os_string)
 ///     .expect("failed writing to vector");
 /// assert_eq!(string.as_bytes(), lossy_string);
+/// # }
 /// ```
 ///
 /// [module]: self
@@ -131,26 +143,31 @@ where
     T: ?Sized + ToBytes,
     W: Write + WriteLossy,
 {
-    #[cfg_attr(not(windows), allow(unused_mut))]
-    let mut lossy = false;
     #[cfg(windows)]
-    if let Some(mut console) = writer.__to_console() {
+    let lossy = if let Some(mut console) = writer.__to_console() {
         if let Some(string) = value.to_wide() {
             return console.write_wide_all(&string.0);
         }
-        lossy = true;
-    }
+        true
+    } else {
+        false
+    };
 
+    #[cfg(windows)]
     let buffer;
-    let string = value.to_bytes();
-    let string = match &string.0 {
+    let string = value.to_bytes().0;
+    #[cfg_attr(not(windows), allow(clippy::infallible_destructuring_match))]
+    let string = match &string {
         ByteStrInner::Bytes(string) => {
+            #[cfg(windows)]
             if lossy {
                 buffer = String::from_utf8_lossy(string);
                 buffer.as_bytes()
             } else {
                 string
             }
+            #[cfg(not(windows))]
+            string
         }
         #[cfg(windows)]
         ByteStrInner::Str(string) => string.as_bytes(),
@@ -214,6 +231,7 @@ r#impl!(
     ///
     /// use print_bytes::eprint_lossy;
     ///
+    /// # #[cfg(feature = "os_str_bytes")]
     /// eprint_lossy(&env::current_exe()?);
     /// #
     /// # Ok::<_, io::Error>(())
@@ -240,6 +258,7 @@ r#impl!(
     ///
     /// use print_bytes::eprintln_lossy;
     ///
+    /// # #[cfg(feature = "os_str_bytes")]
     /// eprintln_lossy(&env::current_exe()?);
     /// #
     /// # Ok::<_, io::Error>(())
@@ -270,6 +289,7 @@ r#impl!(
     ///
     /// use print_bytes::print_lossy;
     ///
+    /// # #[cfg(feature = "os_str_bytes")]
     /// print_lossy(&env::current_exe()?);
     /// #
     /// # Ok::<_, io::Error>(())
@@ -296,6 +316,7 @@ r#impl!(
     ///
     /// use print_bytes::println_lossy;
     ///
+    /// # #[cfg(feature = "os_str_bytes")]
     /// println_lossy(&env::current_exe()?);
     /// #
     /// # Ok::<_, io::Error>(())

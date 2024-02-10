@@ -1,7 +1,9 @@
 use std::borrow::Cow;
 use std::ffi::CString;
+#[cfg(feature = "os_str_bytes")]
 use std::ffi::OsStr;
 use std::io;
+#[cfg(feature = "os_str_bytes")]
 use std::path::Path;
 
 use print_bytes::write_lossy;
@@ -60,8 +62,11 @@ fn test_implementations() -> io::Result<()> {
     }
 
     test!(STRING_BYTES);
-    test!(OsStr::new(STRING));
-    test!(Path::new(STRING));
+    #[cfg(feature = "os_str_bytes")]
+    {
+        test!(OsStr::new(STRING));
+        test!(Path::new(STRING));
+    }
 
     test_one!(&Cow::Borrowed(STRING_BYTES));
     test_one!(&Cow::<[_]>::Owned(STRING_BYTES.to_owned()));

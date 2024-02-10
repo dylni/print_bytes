@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: dylni/build-actions/build@master
       with:
-        nightly-features: specialization
+        nightly-features: 'os_str_bytes specialization'
     timeout-minutes: 10
     strategy:
       matrix:
@@ -25,24 +25,21 @@ jobs:
     steps:
     - uses: dylni/build-actions/build-other@master
       with:
-        nightly-features: specialization
+        nightly-features: 'os_str_bytes specialization'
         target: ${{ matrix.target }}
         version: ${{ matrix.version }}
     timeout-minutes: 10
     strategy:
       matrix:
-        target: [wasm32-wasi, x86_64-unknown-redox]
+        target: [wasm32-unknown-unknown, wasm32-wasi]
         version: [1.63.0, stable, beta, nightly]
-        include:
-        - target: x86_64-fortanix-unknown-sgx
-          version: nightly
   test:
     needs: [build]
     runs-on: ${{ matrix.platform }}
     steps:
     - uses: dylni/build-actions/test@master
       with:
-        nightly-features: specialization
+        nightly-features: 'os_str_bytes specialization'
         version: ${{ matrix.version }}
     timeout-minutes: 10
     strategy:

@@ -22,8 +22,8 @@ rustdoc-args = ["--cfg", "print_bytes_docs_rs"]
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.52", features = ["Win32_Foundation", "Win32_System_Console"] }
 
-[dev-dependencies]
-os_str_bytes = { version = "6.6", features = ["conversions"] }
+[target.'cfg(not(windows))'.dependencies]
+os_str_bytes = { version = "7.0", default-features = false, optional = true }
 
 [features]
 specialization = []

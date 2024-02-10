@@ -3,9 +3,14 @@ use std::ffi::CStr;
 use std::ffi::CString;
 use std::ops::Deref;
 
+#[cfg(windows)]
+type Bytes<'a> = &'a [u8];
+#[cfg(not(windows))]
+type Bytes<'a> = Cow<'a, [u8]>;
+
 #[derive(Debug)]
 pub(super) enum ByteStrInner<'a> {
-    Bytes(&'a [u8]),
+    Bytes(Bytes<'a>),
     #[cfg(windows)]
     Str(Cow<'a, str>),
 }
@@ -18,12 +23,12 @@ pub(super) enum ByteStrInner<'a> {
 pub struct ByteStr<'a>(pub(super) ByteStrInner<'a>);
 
 #[cfg(any(doc, windows))]
-#[cfg_attr(print_bytes_docs_rs, doc(cfg(windows)))]
 impl<'a> ByteStr<'a> {
     /// Wraps a byte string lossily.
     ///
     /// This method can be used to implement [`ToBytes::to_bytes`] when
     /// [`ToBytes::to_wide`] is the better way to represent the string.
+    #[cfg_attr(print_bytes_docs_rs, doc(cfg(windows)))]
     #[inline]
     #[must_use]
     pub fn from_utf8_lossy(string: &'a [u8]) -> Self {
@@ -104,9 +109,10 @@ pub trait ToBytes {
 }
 
 impl ToBytes for [u8] {
+    #[cfg_attr(windows, allow(clippy::useless_conversion))]
     #[inline]
     fn to_bytes(&self) -> ByteStr<'_> {
-        ByteStr(ByteStrInner::Bytes(self))
+        ByteStr(ByteStrInner::Bytes(self.into()))
     }
 
     #[cfg(any(doc, windows))]
@@ -154,16 +160,9 @@ defer_impl!(CStr, to_bytes);
 defer_impl!(CString, as_c_str);
 defer_impl!(Vec<u8>, as_slice);
 
-#[cfg(any(
-    all(target_vendor = "fortanix", target_env = "sgx"),
-    target_os = "hermit",
-    target_os = "solid_asp3",
-    target_os = "wasi",
-    target_os = "xous",
-    unix,
-    windows,
-))]
-mod os_str {
+#[cfg(feature = "os_str_bytes")]
+#[cfg_attr(print_bytes_docs_rs, doc(cfg(feature = "os_str_bytes")))]
+mod os_str_bytes {
     use std::ffi::OsStr;
     use std::ffi::OsString;
     #[cfg(windows)]
@@ -171,7 +170,11 @@ mod os_str {
     use std::path::Path;
     use std::path::PathBuf;
 
+    #[cfg(not(windows))]
+    use os_str_bytes::OsStrBytes;
+
     use super::ByteStr;
+    use super::ByteStrInner;
     use super::ToBytes;
     #[cfg(any(doc, windows))]
     use super::WideStr;
@@ -181,32 +184,10 @@ mod os_str {
         fn to_bytes(&self) -> ByteStr<'_> {
             #[cfg(windows)]
             {
-                use super::ByteStrInner;
-
                 ByteStr(ByteStrInner::Str(self.to_string_lossy()))
             }
             #[cfg(not(windows))]
-            {
-                #[cfg(all(
-                    target_vendor = "fortanix",
-                    target_env = "sgx",
-                ))]
-                use std::os::fortanix_sgx as os;
-                #[cfg(target_os = "hermit")]
-                use std::os::hermit as os;
-                #[cfg(target_os = "solid_asp3")]
-                use std::os::solid as os;
-                #[cfg(unix)]
-                use std::os::unix as os;
-                #[cfg(target_os = "wasi")]
-                use std::os::wasi as os;
-                #[cfg(target_os = "xous")]
-                use std::os::xous as os;
-
-                use os::ffi::OsStrExt;
-
-                self.as_bytes().to_bytes()
-            }
+            ByteStr(ByteStrInner::Bytes(self.to_io_bytes_lossy()))
         }
 
         #[cfg(any(doc, windows))]
