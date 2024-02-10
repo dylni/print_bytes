@@ -25,7 +25,7 @@ fn raw_handle(handle: BorrowedHandle<'_>) -> HANDLE {
 }
 
 #[derive(Clone, Copy)]
-pub struct Console<'a>(BorrowedHandle<'a>);
+pub(super) struct Console<'a>(BorrowedHandle<'a>);
 
 impl<'a> Console<'a> {
     pub(super) fn from_handle<T>(handle: &'a T) -> Option<Self>

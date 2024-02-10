@@ -1,3 +1,5 @@
+#![cfg_attr(windows, allow(private_interfaces))]
+
 use std::io::BufWriter;
 use std::io::LineWriter;
 #[cfg(any(doc, not(feature = "specialization")))]

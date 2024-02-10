@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use std::ffi::CString;
+use std::ffi::CStr;
 #[cfg(feature = "os_str_bytes")]
 use std::ffi::OsStr;
 use std::io;
@@ -42,7 +42,20 @@ fn test_multiple_writes() -> io::Result<()> {
 
 #[test]
 fn test_implementations() -> io::Result<()> {
-    const STRING: &str = "foobar";
+    const fn expect<T, E>(value: &Result<T, E>, message: &str) -> T
+    where
+        T: Copy,
+    {
+        if let Ok(value) = value {
+            *value
+        } else {
+            panic!("{}", message);
+        }
+    }
+
+    const C_STRING: &CStr =
+        expect(&CStr::from_bytes_with_nul(b"foobar\0"), "invalid string");
+    const STRING: &str = expect(&C_STRING.to_str(), "invalid string");
     const STRING_BYTES: &[u8] = STRING.as_bytes();
 
     macro_rules! test_one {
@@ -61,6 +74,7 @@ fn test_implementations() -> io::Result<()> {
         }};
     }
 
+    test!(C_STRING);
     test!(STRING_BYTES);
     #[cfg(feature = "os_str_bytes")]
     {
@@ -70,10 +84,6 @@ fn test_implementations() -> io::Result<()> {
 
     test_one!(&Cow::Borrowed(STRING_BYTES));
     test_one!(&Cow::<[_]>::Owned(STRING_BYTES.to_owned()));
-
-    let c_string = CString::new(STRING_BYTES.to_owned()).unwrap();
-    test_one!(&*c_string);
-    test_one!(&c_string);
 
     Ok(())
 }

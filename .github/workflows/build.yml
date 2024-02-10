@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: dylni/build-actions/build@master
       with:
-        nightly-features: 'os_str_bytes specialization'
+        nightly-features: 'specialization'
     timeout-minutes: 10
     strategy:
       matrix:
@@ -25,24 +25,24 @@ jobs:
     steps:
     - uses: dylni/build-actions/build-other@master
       with:
-        nightly-features: 'os_str_bytes specialization'
+        nightly-features: 'specialization'
         target: ${{ matrix.target }}
         version: ${{ matrix.version }}
     timeout-minutes: 10
     strategy:
       matrix:
         target: [wasm32-unknown-unknown, wasm32-wasi]
-        version: [1.63.0, stable, beta, nightly]
+        version: [1.74.0, stable, beta, nightly]
   test:
     needs: [build]
     runs-on: ${{ matrix.platform }}
     steps:
     - uses: dylni/build-actions/test@master
       with:
-        nightly-features: 'os_str_bytes specialization'
+        nightly-features: 'specialization'
         version: ${{ matrix.version }}
     timeout-minutes: 10
     strategy:
       matrix:
         platform: [macos-latest, ubuntu-latest, windows-latest]
-        version: [1.63.0, stable, beta, nightly]
+        version: [1.74.0, stable, beta, nightly]
