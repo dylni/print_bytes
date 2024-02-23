@@ -1,4 +1,3 @@
-use std::convert::TryInto;
 use std::io;
 use std::os::windows::io::AsHandle;
 use std::os::windows::io::AsRawHandle;
