@@ -7,8 +7,6 @@ use std::process::Stdio;
 
 #[test]
 fn test_wtf8() -> io::Result<()> {
-    #[cfg(windows)]
-    let buffer;
     let string = {
         #[cfg(unix)]
         {
@@ -22,8 +20,7 @@ fn test_wtf8() -> io::Result<()> {
             use std::ffi::OsString;
             use std::os::windows::ffi::OsStringExt;
 
-            buffer = OsString::from_wide(&[0x66, 0x6F, 0xD800, 0x6F]);
-            &buffer
+            &OsString::from_wide(&[0x66, 0x6F, 0xD800, 0x6F])
         }
     };
     assert_eq!(None, string.to_str());
