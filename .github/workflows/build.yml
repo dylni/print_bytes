@@ -31,8 +31,8 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        target: [wasm32-unknown-unknown, wasm32-wasi]
-        version: [1.74.0, stable, beta, nightly]
+        target: [wasm32-unknown-unknown, wasm32-wasip1]
+        version: [1.78.0, stable, beta, nightly]
   test:
     needs: [build]
     runs-on: ${{ matrix.platform }}
