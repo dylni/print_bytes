@@ -20,7 +20,7 @@ rustc-args = ["--cfg", "print_bytes_docs_rs"]
 rustdoc-args = ["--cfg", "print_bytes_docs_rs"]
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_Console"] }
+windows-sys = { version = "0.60", features = ["Win32_Foundation", "Win32_System_Console"] }
 
 [target.'cfg(not(windows))'.dependencies]
 os_str_bytes = { version = "7.0", default-features = false, optional = true }
