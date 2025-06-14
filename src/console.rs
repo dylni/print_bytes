@@ -4,12 +4,11 @@ use std::os::windows::io::AsRawHandle;
 use std::os::windows::io::BorrowedHandle;
 use std::ptr;
 
-use windows_sys::Win32::Foundation::BOOL;
+use windows_sys::core::BOOL;
 use windows_sys::Win32::Foundation::HANDLE;
+use windows_sys::Win32::Foundation::TRUE;
 use windows_sys::Win32::System::Console::GetConsoleMode;
 use windows_sys::Win32::System::Console::WriteConsoleW;
-
-const TRUE: BOOL = 1;
 
 fn check_syscall(result: BOOL) -> io::Result<()> {
     if result == TRUE {
