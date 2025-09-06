@@ -3,7 +3,7 @@ name = "print_bytes"
 version = "2.0.2"
 authors = ["dylni"]
 edition = "2021"
-rust-version = "1.74.0"
+rust-version = "1.77.0"
 description = """
 Print bytes as losslessly as possible
 """

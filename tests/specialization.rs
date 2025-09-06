@@ -42,20 +42,12 @@ fn test_multiple_writes() -> io::Result<()> {
 
 #[test]
 fn test_implementations() -> io::Result<()> {
-    const fn expect<T, E>(value: &Result<T, E>, message: &str) -> T
-    where
-        T: Copy,
-    {
-        if let Ok(value) = value {
-            *value
-        } else {
-            panic!("{}", message);
-        }
-    }
-
-    const C_STRING: &CStr =
-        expect(&CStr::from_bytes_with_nul(b"foobar\0"), "invalid string");
-    const STRING: &str = expect(&C_STRING.to_str(), "invalid string");
+    const C_STRING: &CStr = c"foobar";
+    const STRING: &str = if let Ok(string) = &C_STRING.to_str() {
+        string
+    } else {
+        unreachable!();
+    };
     const STRING_BYTES: &[u8] = STRING.as_bytes();
 
     macro_rules! test_one {
